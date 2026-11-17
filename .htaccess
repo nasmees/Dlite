@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Protect sensitive directories
+RewriteRule ^(app|storage)/ - [F,L]
+
+# Front controller — ทุก request ที่ไม่ใช่ไฟล์จริง ไปที่ index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
+
+# ห้ามรันไฟล์ sqlite / log โดยตรง
+<FilesMatch "\.(sqlite|log)$">
+    Require all denied
+</FilesMatch>
