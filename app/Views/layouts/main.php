@@ -50,6 +50,7 @@
         body { font-family: 'Kanit', sans-serif; }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
         .map-full { height: calc(100vh - 4.5rem - env(safe-area-inset-bottom, 0px)); }
+        body.has-staff .map-full { height: calc(100vh - 4.5rem - 2.5rem - env(safe-area-inset-bottom, 0px)); }
         .btn-primary {
             @apply bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-medium rounded-xl px-5 py-3 transition shadow-sm;
         }
@@ -141,7 +142,7 @@
         #reportDrawer .sheet-foot { flex-shrink: 0; border-top: 1px solid #e2e8f0; background: #fff; padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom, 0px)); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col<?= Auth::check() ? ' has-staff' : '' ?>">
     <div id="toast-container"></div>
 
     <script>
@@ -243,6 +244,18 @@
 
     <div id="offline-bar">โหมดออฟไลน์ — ข้อมูลจะถูกบันทึกในเครื่องและส่งเมื่อออนไลน์</div>
 
+    <?php if (Auth::check()): $staff = Auth::user(); ?>
+    <div class="bg-slate-900 text-slate-200 text-sm">
+        <div class="max-w-3xl mx-auto px-4 h-10 flex items-center justify-between gap-3">
+            <span class="truncate"><?= Helper::e($staff['name'] ?? '') ?></span>
+            <a href="<?= Helper::url('admin') ?>" class="inline-flex items-center gap-1.5 font-medium text-white shrink-0">
+                ระบบจัดการ
+                <span id="pendingBadge" class="hidden bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 items-center justify-center"></span>
+            </a>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <?php require APP_PATH . '/Views/needs/_myreport.php'; ?>
 
     <main class="flex-1 w-full <?= !empty($fullWidth) ? '' : 'max-w-3xl mx-auto px-4' ?> py-4 pb-24">
@@ -273,13 +286,7 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <span>ติดตาม</span>
             </a>
-            <?php if (Auth::check()): ?>
-            <a href="<?= Helper::url('admin') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 relative <?= str_contains($title ?? '', 'แดชบอร์ด') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                <span>แอดมิน</span>
-                <span id="pendingBadge" class="hidden absolute top-1 right-[20%] bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 items-center justify-center"></span>
-            </a>
-            <?php else: ?>
+            <?php if (!Auth::check()): ?>
             <a href="<?= Helper::url('login') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'เข้าสู่ระบบ') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                 <span>เข้าสู่ระบบ</span>
