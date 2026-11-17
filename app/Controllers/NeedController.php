@@ -11,10 +11,21 @@ class NeedController
     {
         $status = $_GET['status'] ?? '';
         $q = trim($_GET['q'] ?? '');
+        $urgency = $_GET['urgency'] ?? '';
+        $scenario = $_GET['scenario'] ?? '';
+        $sort = ($_GET['sort'] ?? 'latest') === 'urgent' ? 'urgent' : 'latest';
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $filters = [];
+
+        $urgencyKeys = array_keys(Helper::urgencyLabels());
+        $scenarioKeys = array_keys(Helper::scenarioLabels());
+        if (!in_array($urgency, $urgencyKeys, true)) $urgency = '';
+        if (!in_array($scenario, $scenarioKeys, true)) $scenario = '';
+
+        $filters = ['sort' => $sort];
         if ($status) $filters['status'] = $status;
         if ($q) $filters['q'] = $q;
+        if ($urgency) $filters['urgency'] = $urgency;
+        if ($scenario) $filters['scenario'] = $scenario;
 
         // Public visitors only see public needs; logged-in volunteers see all
         $publicOnly = !Auth::check();
@@ -32,12 +43,7 @@ class NeedController
             $needs = Need::list($filters, self::PER_PAGE, $offset, $publicOnly);
             $total = Need::count($filters, $publicOnly);
             $pagination = Helper::pagination($page, self::PER_PAGE, $total);
-            $counts = [
-                'all' => Need::count([], $publicOnly),
-                'pending' => Need::count(['status' => 'pending'], $publicOnly),
-                'in_progress' => Need::count(['status' => 'in_progress'], $publicOnly),
-                'completed' => Need::count(['status' => 'completed'], $publicOnly),
-            ];
+            $counts = Need::statusCounts($publicOnly);
             Cache::set($cacheKey, [
                 'needs' => $needs,
                 'pagination' => $pagination,
@@ -50,9 +56,11 @@ class NeedController
             'needs' => $needs,
             'counts' => $counts,
             'pagination' => $pagination,
-            'filters' => ['status' => $status, 'q' => $q],
+            'filters' => ['status' => $status, 'q' => $q, 'urgency' => $urgency, 'scenario' => $scenario, 'sort' => $sort],
+            'isLoggedIn' => Auth::check(),
             'statusLabels' => Helper::statusLabels(),
             'urgencyLabels' => Helper::urgencyLabels(),
+            'scenarioLabels' => Helper::scenarioLabels(),
             'needTypes' => Helper::needTypes(),
         ]);
     }
@@ -71,7 +79,7 @@ class NeedController
             SELECT u.*, us.name as user_name
             FROM updates u
             LEFT JOIN users us ON us.id = u.user_id
-            WHERE u.need_id = ?
+            WHERE u.need_id = ? AND u.is_internal = 0
             ORDER BY u.created_at DESC
         ");
         $updates->execute([(int)$id]);
@@ -86,6 +94,7 @@ class NeedController
             'statusLabels' => Helper::statusLabels(),
             'urgencyLabels' => Helper::urgencyLabels(),
             'needTypes' => Helper::needTypes(),
+            'scenarioLabels' => Helper::scenarioLabels(),
             'csrf' => Auth::csrfToken(),
             'isVolunteer' => Auth::isVolunteer(),
             'isLoggedIn' => Auth::check(),
@@ -121,6 +130,40 @@ class NeedController
     }
 
     /**
+     * Reporter self-closes their own case (e.g. help already arrived informally).
+     * Verified by case code + reporter phone — no login required.
+     */
+    public function close(string $id): void
+    {
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง กรุณารีเฟรชหน้า'], 403);
+        }
+
+        $need = Need::find((int)$id);
+        if (!$need) {
+            View::json(['ok' => false, 'message' => 'ไม่พบรายการ'], 404);
+        }
+        if (in_array($need['status'], ['completed', 'cancelled'], true)) {
+            View::json(['ok' => false, 'message' => 'รายการนี้ปิดแล้ว'], 422);
+        }
+
+        $code = strtoupper(trim($_POST['code'] ?? ''));
+        $phone = trim($_POST['phone'] ?? '');
+        $norm = fn(string $p) => substr(preg_replace('/\D/', '', $p), -9);
+
+        if ($code === '' || $code !== strtoupper($need['code'])) {
+            View::json(['ok' => false, 'message' => 'รหัสเคสไม่ถูกต้อง'], 422);
+        }
+        if ($norm($phone) === '' || strlen($norm($phone)) < 9 || $norm($phone) !== $norm($need['reporter_phone'] ?? '')) {
+            View::json(['ok' => false, 'message' => 'เบอร์โทรไม่ตรงกับผู้แจ้ง'], 422);
+        }
+
+        Need::updateStatus((int)$id, 'completed', null, 'ผู้แจ้งปิดเคสด้วยตนเอง — ได้รับความช่วยเหลือแล้ว');
+        Need::flushCache();
+        View::json(['ok' => true, 'message' => 'ปิดเคสเรียบร้อยแล้ว ขอบคุณที่แจ้งเหตุ']);
+    }
+
+    /**
      * Public-safe status lookup for "my report" banner (no personal data)
      */
     public function reportStatus(): void
@@ -138,6 +181,57 @@ class NeedController
             'status' => $need['status'],
             'lat' => $need['lat'],
             'lng' => $need['lng'],
+            'scenario' => $need['scenario'] ?? null,
+            'need_types' => $need['need_types'] ?? [],
+            'people_count' => (int)($need['people_count'] ?? 0),
+            'district' => $need['district'] ?? null,
+            'province' => $need['province'] ?? null,
+            'created_at' => $need['created_at'] ?? null,
+        ]);
+    }
+
+    /**
+     * Public-safe case detail + public timeline for the track-page popup.
+     * Strips reporter identity, phone, address, assignee.
+     */
+    public function detailJson(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $need = $id ? Need::find($id) : null;
+        if (!$need) {
+            View::json(['ok' => true, 'found' => false]);
+            return;
+        }
+        $db = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT old_status, new_status, message, created_at
+            FROM updates
+            WHERE need_id = ? AND is_internal = 0
+            ORDER BY created_at ASC, id ASC
+        ");
+        $stmt->execute([$need['id']]);
+
+        View::json([
+            'ok' => true,
+            'found' => true,
+            'need' => [
+                'id' => (int)$need['id'],
+                'code' => $need['code'],
+                'status' => $need['status'],
+                'urgency' => $need['urgency'] ?? 'normal',
+                'scenario' => $need['scenario'] ?? null,
+                'need_types' => $need['need_types'] ?? [],
+                'people_count' => (int)($need['people_count'] ?? 0),
+                'district' => $need['district'] ?? null,
+                'province' => $need['province'] ?? null,
+                'area_name' => $need['area_name'] ?? null,
+                'description' => $need['description'] ?? null,
+                'photo_path' => $need['photo_path'] ?? null,
+                'lat' => $need['lat'],
+                'lng' => $need['lng'],
+                'created_at' => $need['created_at'] ?? null,
+            ],
+            'history' => $stmt->fetchAll(),
         ]);
     }
 
@@ -199,7 +293,7 @@ class NeedController
 
         // Log to updates timeline so reporter can see progress
         Database::getInstance()
-            ->prepare("INSERT INTO updates (need_id, user_id, new_status, message) VALUES (?, ?, ?, ?)")
+            ->prepare("INSERT INTO updates (need_id, user_id, new_status, message, is_internal) VALUES (?, ?, ?, ?, 1)")
             ->execute([(int)$id, $user['id'], $need['status'], 'เสนอความช่วยเหลือ: ' . (Help::helpTypes()[$helpType] ?? $helpType)]);
 
         Need::flushCache();

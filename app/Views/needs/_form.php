@@ -4,14 +4,6 @@
  * and requires JS (progressive enhancement). No-JS users use /request page.
  * Expects: $areas, $needTypes, $csrf
  */
-$icons = [
-    'flood' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c3 4 6 7.5 6 11a6 6 0 11-12 0c0-3.5 3-7 6-11z"/></svg>',
-    'evac' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>',
-    'sos' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>',
-    'medical' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>',
-    'supplies' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
-    'other' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-];
 $scenarios = [
     ['key' => 'flood',    'label' => 'น้ำท่วม / ถนนท่วม',   'sub' => 'ขออาหาร น้ำ ที่พัก',        'types' => ['food','water','shelter'], 'urgency' => 'high',     'sos' => false],
     ['key' => 'evac',     'label' => 'ต้องอพยพ / บ้านเสียหาย','sub' => 'เร่งด่วน ต้องการที่พัก',      'types' => ['shelter','evacuation'],   'urgency' => 'critical', 'sos' => false],
@@ -20,20 +12,11 @@ $scenarios = [
     ['key' => 'supplies', 'label' => 'ขาดแคลนอาหาร / น้ำ',    'sub' => 'แจ้งจุดแจกจ่าย',             'types' => ['food','water'],           'urgency' => 'normal',   'sos' => false],
     ['key' => 'other',    'label' => 'ความเสียหายอื่นๆ',       'sub' => 'เล่าเหตุการณ์โดยย่อ',         'types' => ['other'],                  'urgency' => 'normal',   'sos' => false],
 ];
-// Icons for "ความต้องการเฉพาะ" checkboxes — keyed by needTypes() keys
-$needIcons = [
-    'food'       => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
-    'water'      => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c3 4 6 7.5 6 11a6 6 0 11-12 0c0-3.5 3-7 6-11z"/>',
-    'medicine'   => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>',
-    'shelter'    => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
-    'evacuation' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>',
-    'clothing'   => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h6a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>',
-    'other'      => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-];
 ?>
 <form id="reportForm" class="flex flex-col h-full min-h-0" enctype="multipart/form-data"
       action="<?= Helper::url('request') ?>" method="post">
     <input type="hidden" name="csrf_token" value="<?= Helper::e($csrf) ?>">
+    <input type="hidden" name="client_token" value="<?= Helper::e(bin2hex(random_bytes(16))) ?>">
     <input type="hidden" name="lat" id="rLat">
     <input type="hidden" name="lng" id="rLng">
     <input type="hidden" name="urgency" id="rUrgency" value="normal">
@@ -64,8 +47,8 @@ $needIcons = [
                             data-urgency="<?= $s['urgency'] ?>"
                             data-scenario="<?= $s['key'] ?>"
                             data-sos="<?= $s['sos'] ? '1' : '0' ?>">
-                        <span class="scenario-icon w-12 h-12 rounded-xl flex items-center justify-center shrink-0 <?= $s['sos'] ? 'bg-red-100 text-red-600' : 'bg-brand-50 text-brand-600' ?>">
-                            <?= $icons[$s['key']] ?? '' ?>
+                        <span class="scenario-icon w-12 h-12 rounded-xl flex items-center justify-center shrink-0 <?= Helper::scenarioChipColor($s['key']) ?>">
+                            <?= Helper::scenarioIcon($s['key'], 'w-6 h-6') ?>
                         </span>
                         <span class="flex-1">
                             <span class="block text-base font-bold text-slate-800"><?= Helper::e($s['label']) ?></span>
@@ -195,7 +178,7 @@ $needIcons = [
                     <div class="grid grid-cols-1 gap-2.5">
                         <?php foreach ($needTypes as $key => $label): ?>
                             <label class="flex items-center gap-3 bg-white border-2 border-slate-300 rounded-xl px-4 py-3.5 cursor-pointer has-[:checked]:bg-brand-50 has-[:checked]:border-brand-600 transition">
-                                <svg class="w-6 h-6 text-brand-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><?= $needIcons[$key] ?? $needIcons["other"] ?></svg>
+                                <?= Helper::needTypeIcon($key, 'w-6 h-6 shrink-0 text-brand-600') ?>
                                 <span class="flex-1 text-base font-medium text-slate-800"><?= Helper::e($label) ?></span>
                                 <input type="checkbox" name="need_types[]" value="<?= Helper::e($key) ?>" class="rounded border-slate-300 text-brand-600 w-5 h-5 shrink-0">
                             </label>
@@ -444,7 +427,15 @@ $needIcons = [
 
         const formData = new FormData(form);
 
+        const warnPhotoLost = () => {
+            const pi = form.querySelector('input[name="photo"]');
+            if (pi && pi.files && pi.files.length) {
+                Toast.show('รูปภาพไม่สามารถส่งแบบออฟไลน์ได้ — เคสจะถูกส่งเมื่อกลับมาออนไลน์ (ไม่มีรูป)', 'err');
+            }
+        };
+
         if (!navigator.onLine) {
+            warnPhotoLost();
             OfflineHelper.queue({ url: window.BASE_PATH + '/request', payload: buildPayload(formData), csrf: formData.get('csrf_token') });
             OfflineHelper.clearDraft('request');
             SubmitOverlay.show('success');
@@ -472,6 +463,7 @@ $needIcons = [
                 submitBtn.disabled = false;
             }
         } catch (err) {
+            warnPhotoLost();
             OfflineHelper.queue({ url: window.BASE_PATH + '/request', payload: buildPayload(formData), csrf: formData.get('csrf_token') });
             OfflineHelper.clearDraft('request');
             SubmitOverlay.show('success');

@@ -30,7 +30,7 @@
 <script>
 (function () {
     const LS_KEY = 'dsc_announcement_seen';
-    const POLL_MS = 45000;
+    const POLL_MS = 60000;
     const popup = document.getElementById('annPopup');
     const header = document.getElementById('annPopupHeader');
     const levelEl = document.getElementById('annPopupLevel');

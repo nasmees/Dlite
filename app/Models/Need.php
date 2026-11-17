@@ -14,11 +14,11 @@ class Need
             INSERT INTO needs (
                 code, reporter_name, reporter_phone, area_id, address,
                 lat, lng, people_count, need_types, description,
-                urgency, status, photo_path, scenario
+                urgency, status, photo_path, scenario, client_token
             ) VALUES (
                 :code, :reporter_name, :reporter_phone, :area_id, :address,
                 :lat, :lng, :people_count, :need_types, :description,
-                :urgency, 'pending', :photo_path, :scenario
+                :urgency, 'pending', :photo_path, :scenario, :client_token
             )
         ");
 
@@ -38,6 +38,7 @@ class Need
             ':urgency' => $data['urgency'] ?? 'normal',
             ':photo_path' => $data['photo_path'] ?? null,
             ':scenario' => $data['scenario'] ?? null,
+            ':client_token' => $data['client_token'] ?? null,
         ]);
 
         $id = (int)$db->lastInsertId();
@@ -68,6 +69,38 @@ class Need
         return $row ?: null;
     }
 
+    /**
+     * Find cases by reporter phone — tolerant of +66/66/0 prefixes and separators.
+     * Matches on the last 9 digits so formatting differences don't matter.
+     */
+    public static function findByPhone(string $phone): array
+    {
+        $digits = preg_replace('/\D/', '', $phone);
+        if ($digits === '') return [];
+        if (str_starts_with($digits, '66')) {
+            $digits = '0' . substr($digits, 2);
+        }
+        $tail = substr($digits, -9);
+        if (strlen($tail) < 9) return [];
+
+        $db = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT id FROM needs
+            WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(reporter_phone,'-',''),' ',''),'+',''),'()',''),'_', '') LIKE ?
+            ORDER BY created_at DESC
+            LIMIT 10
+        ");
+        $stmt->execute(['%' . $tail . '%']);
+        $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $out = [];
+        foreach ($ids as $id) {
+            $n = self::find((int)$id);
+            if ($n) $out[] = $n;
+        }
+        return $out;
+    }
+
     public static function findByCode(string $code): ?array
     {
         $db = Database::getInstance();
@@ -94,6 +127,10 @@ class Need
             $where[] = 'n.urgency = ?';
             $params[] = $filters['urgency'];
         }
+        if (!empty($filters['scenario'])) {
+            $where[] = 'n.scenario = ?';
+            $params[] = $filters['scenario'];
+        }
         if (!empty($filters['q'])) {
             $where[] = '(n.reporter_name LIKE ? OR n.address LIKE ? OR n.description LIKE ? OR n.code LIKE ?)';
             $q = '%' . $filters['q'] . '%';
@@ -103,26 +140,57 @@ class Need
             $where[] = 'n.lat IS NOT NULL AND n.lng IS NOT NULL';
         }
 
+        $orderBy = "n.created_at DESC";
+        if (($filters['sort'] ?? '') !== 'latest') {
+            $orderBy = "
+                CASE n.urgency
+                    WHEN 'critical' THEN 1
+                    WHEN 'high' THEN 2
+                    WHEN 'normal' THEN 3
+                    ELSE 4
+                END,
+                n.created_at DESC
+            ";
+        }
+
         $sql = "
-            SELECT n.*, a.name as area_name, a.province, u.name as assigned_name
+            SELECT n.*, a.name as area_name, a.district, a.province, u.name as assigned_name
             FROM needs n
             LEFT JOIN areas a ON a.id = n.area_id
             LEFT JOIN users u ON u.id = n.assigned_to
             WHERE " . implode(' AND ', $where) . "
-            ORDER BY 
-                CASE n.urgency 
-                    WHEN 'critical' THEN 1 
-                    WHEN 'high' THEN 2 
-                    WHEN 'normal' THEN 3 
-                    ELSE 4 
-                END,
-                n.created_at DESC
+            ORDER BY {$orderBy}
             LIMIT {$limit} OFFSET {$offset}
         ";
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
+        foreach ($rows as &$r) {
+            $r['need_types'] = json_decode($r['need_types'] ?? '[]', true) ?: [];
+        }
+        return $rows;
+    }
+
+    /**
+     * Pending cases with high/critical urgency — homepage "urgent incidents" section
+     */
+    public static function urgentCases(bool $publicOnly = false, int $limit = 5): array
+    {
+        $db = Database::getInstance();
+        $where = ["n.status = 'pending'", "n.urgency IN ('critical','high')"];
+        if ($publicOnly) {
+            $where[] = 'n.is_public = 1';
+        }
+        $sql = "
+            SELECT n.*, a.name as area_name, a.district, a.province
+            FROM needs n
+            LEFT JOIN areas a ON a.id = n.area_id
+            WHERE " . implode(' AND ', $where) . "
+            ORDER BY CASE n.urgency WHEN 'critical' THEN 1 ELSE 2 END, n.created_at DESC
+            LIMIT " . (int)$limit . "
+        ";
+        $rows = $db->query($sql)->fetchAll();
         foreach ($rows as &$r) {
             $r['need_types'] = json_decode($r['need_types'] ?? '[]', true) ?: [];
         }
@@ -137,7 +205,7 @@ class Need
         $db = Database::getInstance();
         $where = $publicOnly ? 'WHERE is_public = 1' : '';
         $rows = $db->query("SELECT status, COUNT(*) AS c FROM needs {$where} GROUP BY status")->fetchAll();
-        $counts = ['all' => 0, 'pending' => 0, 'in_progress' => 0, 'completed' => 0, 'cancelled' => 0];
+        $counts = ['all' => 0, 'pending' => 0, 'accepted' => 0, 'in_progress' => 0, 'completed' => 0, 'cancelled' => 0];
         foreach ($rows as $r) {
             $counts['all'] += (int)$r['c'];
             if (isset($counts[$r['status']])) $counts[$r['status']] = (int)$r['c'];
@@ -160,6 +228,15 @@ class Need
         if (!empty($filters['urgency'])) {
             $where[] = 'urgency = ?';
             $params[] = $filters['urgency'];
+        }
+        if (!empty($filters['scenario'])) {
+            $where[] = 'scenario = ?';
+            $params[] = $filters['scenario'];
+        }
+        if (!empty($filters['q'])) {
+            $where[] = '(reporter_name LIKE ? OR address LIKE ? OR description LIKE ? OR code LIKE ?)';
+            $q = '%' . $filters['q'] . '%';
+            $params = array_merge($params, [$q, $q, $q, $q]);
         }
         $sql = "SELECT COUNT(*) FROM needs WHERE " . implode(' AND ', $where);
         $stmt = $db->prepare($sql);

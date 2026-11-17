@@ -1,8 +1,8 @@
 <?php
 /**
  * Home — sectioned civic view
- * Map card + status summary + latest requests + slide-up report drawer.
- * Expects: $areas, $needTypes, $csrf, $counts, $latest, $statusLabels, $urgencyLabels
+ * Map card + status summary + urgent incidents + slide-up report drawer.
+ * Expects: $areas, $needTypes, $csrf, $counts, $urgent, $urgencyLabels
  */
 ?>
 <div class="space-y-4 -mt-2">
@@ -47,11 +47,6 @@
                 <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#16A34A"></span>ช่วยเหลือแล้ว</div>
             </div>
 
-            <!-- FAB: report -->
-            <button type="button" id="fabReport" class="report-cta absolute bottom-20 md:bottom-5 right-4 z-[1001] min-h-[56px] px-5 rounded-2xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold flex items-center gap-2">
-                <i class="fas fa-person-drowning text-xl"></i>
-                แจ้งเหตุ
-            </button>
         </div>
     </section>
 
@@ -83,51 +78,45 @@
             <?php endforeach; ?>
         </div>    </section>
 
-    <!-- Section: Latest requests -->
-    <section class="rounded-2xl border-2 border-slate-300 bg-white shadow-md p-5 mb-4">
+    <!-- Section: Urgent incidents -->
+    <section class="rounded-2xl border-2 border-red-200 bg-white shadow-md p-5 mb-4">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <h2 class="font-semibold text-slate-800">เรื่องล่าสุด</h2>
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                <h2 class="font-semibold text-slate-800">เหตุการณ์เร่งด่วน</h2>
             </div>
-            <a href="<?= Helper::url('needs') ?>" class="text-sm text-brand-600 font-medium">ดูทั้งหมด →</a>
+            <a href="<?= Helper::url('needs?status=pending') ?>" class="text-sm text-brand-600 font-medium">ดูทั้งหมด →</a>
         </div>
         <div class="space-y-3 mt-3">
-            <?php if (empty($latest)): ?>
+            <?php if (empty($urgent)): ?>
                 <div class="card p-6 text-center">
-                    <p class="text-slate-500 text-sm">ยังไม่มีเรื่องแจ้ง — เป็นคนแรกที่แจ้งเหตุได้เลย</p>
-                    <button type="button" onclick="window.openReportDrawer && window.openReportDrawer()" class="report-cta inline-block mt-3 text-sm px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold">แจ้งเหตุ</button>
+                    <p class="text-slate-500 text-sm">ไม่มีเหตุการณ์เร่งด่วนในขณะนี้</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($latest as $n): ?>
-                    <a href="<?= Helper::url('needs/' . $n['id']) ?>" class="card p-4 flex gap-4 hover:border-brand-400 hover:shadow-md transition active:bg-slate-50">
-                        <div class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
-                            <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <?php foreach ($urgent as $n): ?>
+                    <?php
+                    $place = ($n['district'] ?? '') !== '' ? $n['district'] : ($n['area_name'] ?? '');
+                    $locParts = array_values(array_unique(array_filter([$place, $n['province'] ?? ''])));
+                    $loc = implode(' · ', array_slice($locParts, 0, 2));
+                    $meta = array_merge(
+                        $loc ? [$loc] : [],
+                        ((int)($n['people_count'] ?? 0) > 0) ? ['~' . number_format((int)$n['people_count']) . ' คน'] : [],
+                        array_map(fn($t) => $needTypes[$t] ?? $t, array_slice($n['need_types'] ?? [], 0, 3))
+                    );
+                    ?>
+                    <a href="<?= Helper::url('needs/' . $n['id']) ?>" class="card px-4 py-3 flex items-center gap-3 hover:border-red-300 hover:shadow-md transition active:bg-slate-50">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between gap-2 mb-1">
-                                <div class="min-w-0">
-                                    <div class="font-semibold text-slate-800 text-base truncate"><?= Helper::e($n['reporter_name']) ?></div>
-                                    <div class="text-sm text-slate-500 mt-0.5"><?= Helper::e($n['code']) ?> · <?= Helper::timeAgo($n['created_at']) ?></div>
-                                </div>
-                                <span class="text-sm px-2.5 py-1 rounded-full font-medium <?= Helper::statusColor($n['status']) ?> shrink-0"><?= Helper::e($statusLabels[$n['status']] ?? $n['status']) ?></span>
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-semibold text-slate-800 truncate"><?= !empty($n['scenario']) && isset($scenarioLabels[$n['scenario']]) ? Helper::e($scenarioLabels[$n['scenario']]) : 'เหตุการณ์' ?> <span class="font-normal text-slate-400">· <?= Helper::timeAgo($n['created_at']) ?></span></p>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-semibold <?= Helper::urgencyColor($n['urgency']) ?> shrink-0"><?= Helper::e($urgencyLabels[$n['urgency']] ?? $n['urgency']) ?></span>
                             </div>
-                            <?php if ($n['address'] || $n['area_name']): ?>
-                                <div class="flex items-center gap-1 text-sm text-slate-600 mb-2">
-                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                    <span class="truncate"><?= Helper::e($n['area_name'] ?? '') ?><?= $n['area_name'] && $n['address'] ? ' · ' : '' ?><?= Helper::e($n['address'] ?? '') ?></span>
-                                </div>
-                            <?php endif; ?>
-                            <?php if (!empty($n['need_types'])): ?>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <?php foreach (array_slice($n['need_types'], 0, 3) as $t): ?>
-                                        <span class="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-md font-medium"><?= Helper::e($needTypes[$t] ?? $t) ?></span>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
+                            <p class="text-sm font-medium text-slate-700 truncate mt-0.5"><?= Helper::e(implode(' · ', $meta)) ?></p>
                         </div>
                     </a>
-                    <div class="border-t border-slate-200 my-3"></div>
+                    <div class="border-t border-slate-200 my-2"></div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
@@ -166,7 +155,6 @@ window.addEventListener('error', function(e) {
         document.body.style.overflow = '';
     }
     window.openReportDrawer = openDrawer;
-    document.getElementById('fabReport').addEventListener('click', openDrawer);
     document.getElementById('drawerBackdrop').addEventListener('click', closeDrawer);
     const closeBtn = document.getElementById('drawerClose');
     if (closeBtn) closeBtn.addEventListener('click', closeDrawer);

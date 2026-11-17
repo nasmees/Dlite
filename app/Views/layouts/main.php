@@ -194,6 +194,9 @@
                     this.isOnline = false;
                 });
                 if (!navigator.onLine) document.body.classList.add('offline');
+                // Retry pending submissions on load and every 60s — not only on 'online' events
+                this.flushQueue();
+                setInterval(() => this.flushQueue(), 60000);
             },
 
             queue(data) {
@@ -202,11 +205,19 @@
                 localStorage.setItem(this.queueKey, JSON.stringify(q));
             },
 
+            _flushing: false,
+
             async flushQueue() {
+                if (this._flushing) return;
                 const q = JSON.parse(localStorage.getItem(this.queueKey) || '[]');
                 if (!q.length) return;
+                this._flushing = true;
+                const now = Date.now();
                 const remaining = [];
                 for (const item of q) {
+                    // Drop items older than 24h or retried > 20 times — never block the queue forever
+                    if (now - (item.queuedAt || 0) > 24 * 3600 * 1000 || (item.attempts || 0) >= 20) continue;
+                    item.attempts = (item.attempts || 0) + 1;
                     try {
                         const form = new FormData();
                         Object.entries(item.payload || {}).forEach(([k,v]) => {
@@ -216,12 +227,23 @@
                         form.append('csrf_token', item.csrf || '');
                         const res = await fetch(item.url, { method: 'POST', body: form, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                         const json = await res.json();
-                        if (!json.ok) remaining.push(item);
+                        if (json.ok) {
+                            // Keep local "my report" in sync with the server-side case
+                            if (json.id && typeof window.saveMyReport === 'function') {
+                                window.saveMyReport({ id: json.id, code: json.code, lat: item.payload?.lat, lng: item.payload?.lng, status: 'pending' });
+                            }
+                        } else {
+                            remaining.push(item);
+                        }
                     } catch (e) {
                         remaining.push(item);
                     }
                 }
                 localStorage.setItem(this.queueKey, JSON.stringify(remaining));
+                this._flushing = false;
+                if (remaining.length && navigator.onLine && typeof window.Toast !== 'undefined') {
+                    window.Toast.show('มี ' + remaining.length + ' รายการรอส่ง — จะลองใหม่อัตโนมัติ', 'err');
+                }
             },
 
             saveDraft(key, data) {

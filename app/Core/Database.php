@@ -223,6 +223,18 @@ class Database
                 $db->exec("ALTER TABLE needs ADD COLUMN scenario TEXT");
             }
 
+            // Ensure updates.is_internal exists — staff-only notes must not leak to public timeline
+            $updCols = $db->query("PRAGMA table_info(updates)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('is_internal', $updCols, true)) {
+                $db->exec("ALTER TABLE updates ADD COLUMN is_internal INTEGER NOT NULL DEFAULT 0");
+            }
+
+            // Ensure needs.client_token exists — idempotency key for offline queue retries
+            if (!in_array('client_token', $needCols, true)) {
+                $db->exec("ALTER TABLE needs ADD COLUMN client_token TEXT");
+            }
+            $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_needs_client_token ON needs(client_token)");
+
             $version = 'admin_directory_demo_v1';
             $stmt = $db->prepare("SELECT 1 FROM admin_migrations WHERE version = ?");
             $stmt->execute([$version]);

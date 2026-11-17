@@ -521,7 +521,7 @@ class AdminController
             $ok = Need::assign((int)$id, $target);
             if ($ok) {
                 $assignee = User::find($target);
-                $db->prepare("INSERT INTO updates (need_id, user_id, new_status, message) VALUES (?,?,?,?)")
+                $db->prepare("INSERT INTO updates (need_id, user_id, new_status, message, is_internal) VALUES (?,?,?,?,1)")
                    ->execute([(int)$id, $uid, $need['status'], 'มอบหมายให้ ' . ($assignee['name'] ?? 'ผู้ใช้ #' . $target)]);
                 Need::flushCache();
             }
@@ -533,7 +533,7 @@ class AdminController
             if ($message === '') {
                 View::json(['ok' => false, 'message' => 'กรุณาระบุข้อความ'], 422);
             }
-            $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message) VALUES (?,?,?,?,?)")
+            $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message, is_internal) VALUES (?,?,?,?,?,1)")
                ->execute([(int)$id, $uid, $need['status'], $need['status'], $message]);
             Need::flushCache();
             View::json(['ok' => true, 'message' => 'บันทึกบันทึกแล้ว']);
@@ -818,7 +818,10 @@ class AdminController
     {
         // ?for=admin → staff audience; otherwise public audience
         $for = ($_GET['for'] ?? '') === 'admin' ? 'staff' : 'public';
-        $latest = Announcement::latestFor($for);
+        // Short server-side cache — one DB hit per 20s regardless of open tabs.
+        // Wrapped in array so "no announcement" is cached too (Cache can't store null).
+        $cached = Cache::remember('ann_latest:' . $for, 20, fn() => ['a' => Announcement::latestFor($for)]);
+        $latest = $cached['a'] ?? null;
         View::json(['ok' => true, 'announcement' => $latest ?: null]);
     }
 

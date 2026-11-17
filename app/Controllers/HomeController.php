@@ -15,9 +15,10 @@ class HomeController
             'needTypes' => Helper::needTypes(),
             'csrf' => Auth::csrfToken(),
             'counts' => Need::statusCounts($publicOnly),
-            'latest' => Need::list([], 5, 0, $publicOnly),
+            'urgent' => Need::urgentCases($publicOnly, 5),
             'statusLabels' => Helper::statusLabels(),
             'urgencyLabels' => Helper::urgencyLabels(),
+            'scenarioLabels' => Helper::scenarioLabels(),
         ]);
     }
 
@@ -63,6 +64,24 @@ class HomeController
         $scenario = in_array($_POST['scenario'] ?? '', $scenarioKeys, true) ? $_POST['scenario'] : null;
         $areaId = !empty($_POST['area_id']) ? (int)$_POST['area_id'] : null;
 
+        // Idempotency: offline-queue retries reuse the same client_token — return the existing case instead of duplicating
+        $clientToken = trim($_POST['client_token'] ?? '');
+        if ($clientToken !== '' && preg_match('/^[A-Za-z0-9_-]{8,64}$/', $clientToken)) {
+            $dup = Database::getInstance()
+                ->prepare("SELECT id FROM needs WHERE client_token = ?");
+            $dup->execute([$clientToken]);
+            $dupId = (int)$dup->fetchColumn();
+            if ($dupId > 0) {
+                $existing = Need::find($dupId);
+                if ($existing) {
+                    if (!$wantsJson) {
+                        View::redirect('/success?code=' . urlencode($existing['code']));
+                    }
+                    View::json(['ok' => true, 'message' => 'ส่งคำขอสำเร็จ', 'code' => $existing['code'], 'id' => $dupId, 'duplicate' => true]);
+                }
+            }
+        }
+
         if ($name === '') {
             if ($wantsJson) {
                 View::json(['ok' => false, 'message' => 'กรุณาระบุชื่อผู้แจ้ง'], 422);
@@ -89,6 +108,7 @@ class HomeController
             'urgency' => in_array($urgency, ['low','normal','high','critical'], true) ? $urgency : 'normal',
             'photo_path' => $photoPath,
             'scenario' => $scenario,
+            'client_token' => (preg_match('/^[A-Za-z0-9_-]{8,64}$/', $clientToken) === 1) ? $clientToken : null,
         ]);
 
         Need::flushCache();

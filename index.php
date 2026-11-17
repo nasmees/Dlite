@@ -41,6 +41,7 @@ $router->get('/needs', [NeedController::class, 'index']);
 $router->get('/needs/{id}', [NeedController::class, 'show']);
 $router->post('/needs/{id}/status', [NeedController::class, 'updateStatus']);
 $router->post('/needs/{id}/help', [NeedController::class, 'help']);
+$router->post('/needs/{id}/close', [NeedController::class, 'close']);
 
 // Track status by code (public)
 $router->get('/track', [TrackController::class, 'index']);
@@ -49,6 +50,7 @@ $router->get('/track', [TrackController::class, 'index']);
 $router->get('/api/points', [MapController::class, 'points']);
 $router->get('/api/needs-summary', [NeedController::class, 'summary']);
 $router->get('/api/report-status', [NeedController::class, 'reportStatus']);
+$router->get('/api/need-detail', [NeedController::class, 'detailJson']);
 
 // Auth
 $router->get('/login', [AuthController::class, 'loginForm']);
