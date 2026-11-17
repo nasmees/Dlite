@@ -21,6 +21,20 @@ class User
         return $stmt->fetch() ?: null;
     }
 
+    public static function phoneExists(string $phone, ?int $exceptId = null): bool
+    {
+        $db = Database::getInstance();
+        $sql = "SELECT 1 FROM users WHERE phone = ?";
+        $params = [$phone];
+        if ($exceptId !== null) {
+            $sql .= " AND id != ?";
+            $params[] = $exceptId;
+        }
+        $stmt = $db->prepare($sql . " LIMIT 1");
+        $stmt->execute($params);
+        return (bool)$stmt->fetchColumn();
+    }
+
     public static function authenticate(string $phone, string $password): ?array
     {
         $user = self::findByPhone($phone);

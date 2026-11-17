@@ -10,7 +10,7 @@ $canClose = in_array($status, ['accepted', 'in_progress'], true);
     <!-- Header -->
     <div class="flex items-start justify-between gap-4 flex-wrap">
         <div>
-            <a href="<?= Helper::url('admin/requests') ?>" class="text-sm text-slate-500 hover:text-brand-600">← กลับรายการ</a>
+            <a href="<?= Helper::url('admin') ?>" class="text-sm text-slate-500 hover:text-brand-600">← กลับศูนย์บัญชาการ</a>
             <h1 class="text-2xl font-bold text-slate-800 mt-1"><?= Helper::e($need['code']) ?></h1>
             <p class="text-slate-500 mt-1"><?= Helper::e($need['reporter_name']) ?> · <?= Helper::timeAgo($need['created_at']) ?></p>
         </div>

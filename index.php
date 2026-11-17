@@ -57,6 +57,14 @@ $router->get('/logout', [AuthController::class, 'logout']);
 
 // Admin
 $router->get('/admin', [AdminController::class, 'index']);
+$router->get('/admin/map', [AdminController::class, 'map']);
+$router->get('/admin/map/points', [AdminController::class, 'mapPoints']);
+$router->get('/admin/volunteers', [AdminController::class, 'volunteers']);
+$router->post('/admin/volunteers', [AdminController::class, 'saveVolunteer']);
+$router->post('/admin/volunteers/{id}/availability', [AdminController::class, 'updateVolunteerAvailability']);
+$router->get('/admin/organizations', [AdminController::class, 'organizations']);
+$router->post('/admin/organizations', [AdminController::class, 'saveOrganization']);
+$router->post('/admin/organizations/{id}/toggle', [AdminController::class, 'toggleOrganization']);
 $router->get('/admin/requests', [AdminController::class, 'requests']);
 $router->get('/admin/requests/{id}', [AdminController::class, 'requestDetail']);
 $router->post('/admin/requests/{id}/action', [AdminController::class, 'requestAction']);

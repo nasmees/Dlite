@@ -189,10 +189,10 @@ class Need
         Cache::flush();
     }
 
-    public static function mapPoints(array $filters = []): array
+    public static function mapPoints(array $filters = [], bool $publicOnly = true): array
     {
         $filters['has_location'] = true;
-        $rows = self::list($filters, 500, 0, true);
+        $rows = self::list($filters, 500, 0, $publicOnly);
         $points = [];
         foreach ($rows as $r) {
             if ($r['lat'] && $r['lng']) {

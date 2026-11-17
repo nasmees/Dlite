@@ -1,110 +1,242 @@
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">แดชบอร์ด</h1>
-            <p class="text-slate-500 mt-1">สวัสดี <?= Helper::e($user['name']) ?></p>
+<div class="command-center">
+    <section class="command-cases bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-200">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h2 class="font-semibold text-slate-900">เคสเร่งด่วน</h2>
+                    <p class="text-sm text-slate-500 mt-1">คำขอที่รอรับเรื่องและต้องประสานงาน</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                    <?= count($cases) ?> เคส
+                </span>
+            </div>
         </div>
-        <div class="text-sm text-slate-400">
-            <?php $now = new DateTime('now', new DateTimeZone('Asia/Bangkok')); ?>
-            <?= $now->format('d/m/Y H:i') ?>
-        </div>
-    </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <a href="<?= Helper::url('admin/requests?status=pending') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-3">
-                <span class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                </span>
-                <span class="text-xs font-medium text-slate-400">รอรับเรื่อง</span>
-            </div>
-            <div class="text-3xl font-bold text-amber-600"><?= (int)$counts['pending'] ?></div>
-        </a>
-        <a href="<?= Helper::url('admin/requests?status=accepted') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-3">
-                <span class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </span>
-                <span class="text-xs font-medium text-slate-400">รับเรื่องแล้ว</span>
-            </div>
-            <div class="text-3xl font-bold text-blue-600"><?= (int)$counts['accepted'] ?></div>
-        </a>
-        <a href="<?= Helper::url('admin/requests?status=in_progress') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-3">
-                <span class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                </span>
-                <span class="text-xs font-medium text-slate-400">กำลังช่วยเหลือ</span>
-            </div>
-            <div class="text-3xl font-bold text-indigo-600"><?= (int)$counts['in_progress'] ?></div>
-        </a>
-        <a href="<?= Helper::url('admin/requests?status=completed') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center justify-between mb-3">
-                <span class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </span>
-                <span class="text-xs font-medium text-slate-400">เสร็จสิ้น</span>
-            </div>
-            <div class="text-3xl font-bold text-emerald-600"><?= (int)$counts['completed'] ?></div>
-        </a>
-    </div>
-
-    <!-- Pending Requests -->
-    <div class="bg-white rounded-xl border border-slate-200 p-5">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-semibold text-slate-800 text-lg">คำขอที่รอรับเรื่อง</h2>
-            <a href="<?= Helper::url('admin/requests?status=pending') ?>" class="text-sm text-brand-600 font-medium hover:underline">ดูทั้งหมด</a>
-        </div>
-        <?php if (empty($recent)): ?>
-            <div class="text-center py-8 text-slate-400 text-sm">ไม่มีรายการรอรับเรื่อง</div>
-        <?php else: ?>
-            <div class="space-y-3">
-                <?php foreach ($recent as $n): ?>
-                    <a href="<?= Helper::url('admin/requests/' . $n['id']) ?>" class="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-slate-50 transition">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <div class="command-case-list flex-1 p-3 space-y-3">
+            <?php if (empty($cases)): ?>
+                <div class="h-full min-h-56 flex flex-col items-center justify-center text-center px-6">
+                    <div class="w-11 h-11 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <p class="font-medium text-slate-800">ไม่มีเคสที่รอรับเรื่อง</p>
+                    <p class="text-sm text-slate-500 mt-1">เมื่อมีคำขอใหม่ จะแสดงในรายการนี้</p>
+                </div>
+            <?php else: ?>
+                <?php foreach ($cases as $case): ?>
+                    <article class="rounded-lg border border-slate-200 p-3 hover:border-slate-300 transition" data-case-id="<?= (int)$case['id'] ?>">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex items-center flex-wrap gap-2">
+                                    <span class="font-semibold text-slate-900"><?= Helper::e($case['code']) ?></span>
+                                    <span class="rounded-full px-2 py-0.5 text-xs font-medium <?= Helper::urgencyColor($case['urgency']) ?>">
+                                        <?= Helper::e($urgencyLabels[$case['urgency']] ?? $case['urgency']) ?>
+                                    </span>
+                                </div>
+                                <p class="text-sm text-slate-700 mt-1"><?= Helper::e($case['reporter_name']) ?> · <?= (int)$case['people_count'] ?> คน</p>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    <?= Helper::e($case['area_name'] ?? 'ไม่ระบุพื้นที่') ?>
+                                    <?php if (!empty($case['address'])): ?> · <?= Helper::e($case['address']) ?><?php endif; ?>
+                                </p>
+                                <p class="text-xs text-slate-400 mt-1"><?= Helper::timeAgo($case['created_at']) ?></p>
                             </div>
-                            <div>
-                                <div class="font-medium text-slate-800"><?= Helper::e($n['reporter_name']) ?></div>
-                                <div class="text-sm text-slate-500"><?= Helper::e($n['code']) ?> · <?= Helper::timeAgo($n['created_at']) ?></div>
-                            </div>
+                            <a href="<?= Helper::url('admin/requests/' . $case['id']) ?>" class="text-xs font-medium text-brand-700 hover:underline shrink-0">รายละเอียด</a>
                         </div>
-                        <span class="text-sm px-3 py-1 rounded-full font-medium <?= Helper::urgencyColor($n['urgency']) ?>"><?= Helper::e($urgencyLabels[$n['urgency']] ?? '') ?></span>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <a href="<?= Helper::url('admin/requests') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center gap-3">
-                <span class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                </span>
-                <span class="font-medium text-slate-800">จัดการคำขอ</span>
+                        <?php if (!empty($case['need_types'])): ?>
+                            <div class="flex flex-wrap gap-1.5 mt-3">
+                                <?php foreach (array_slice($case['need_types'], 0, 3) as $type): ?>
+                                    <span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600"><?= Helper::e($needTypes[$type] ?? $type) ?></span>
+                                <?php endforeach; ?>
+                                <?php if (count($case['need_types']) > 3): ?>
+                                    <span class="px-1 py-1 text-xs text-slate-500">+<?= count($case['need_types']) - 3 ?></span>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                            <?php if ($canAccept): ?>
+                                <button type="button" class="accept-case btn-primary text-sm" data-case-id="<?= (int)$case['id'] ?>">รับเคส</button>
+                            <?php endif; ?>
+                            <?php if (!empty($case['lat']) && !empty($case['lng'])): ?>
+                                <button type="button" class="focus-case rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                                    data-lat="<?= Helper::e((string)$case['lat']) ?>" data-lng="<?= Helper::e((string)$case['lng']) ?>" data-case-id="<?= (int)$case['id'] ?>">
+                                    ดูบนแผนที่
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </section>
+
+    <section class="command-map-panel bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-200">
+            <div>
+                <h2 class="font-semibold text-slate-900">แผนที่สถานการณ์</h2>
+                <p id="mapPointCount" class="text-sm text-slate-500 mt-1" role="status" aria-live="polite">กำลังโหลดตำแหน่ง…</p>
             </div>
-        </a>
-        <?php if (!empty($isAdmin)): ?>
-        <a href="<?= Helper::url('admin/users') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center gap-3">
-                <span class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                </span>
-                <span class="font-medium text-slate-800">ผู้ใช้</span>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
+                <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-red-600"></i>รอรับเรื่อง</span>
+                <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-blue-600"></i>รับเรื่องแล้ว</span>
+                <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-amber-500"></i>กำลังช่วย</span>
+                <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-emerald-600"></i>เสร็จสิ้น</span>
+                <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-slate-500"></i>ยกเลิก</span>
             </div>
-        </a>
-        <a href="<?= Helper::url('admin/areas') ?>" class="bg-white rounded-xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-md transition">
-            <div class="flex items-center gap-3">
-                <span class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center">
-                    <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                </span>
-                <span class="font-medium text-slate-800">พื้นที่</span>
-            </div>
-        </a>
-        <?php endif; ?>
-    </div>
+        </div>
+        <div class="relative flex-1 min-h-0">
+            <div id="commandMap" class="command-map w-full" role="application" aria-label="แผนที่แสดงตำแหน่งคำขอความช่วยเหลือ"></div>
+            <div id="mapMessage" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-[1000] rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-md" role="status" aria-live="polite"></div>
+        </div>
+    </section>
 </div>
+
+<script>
+(function() {
+    const mapElement = document.getElementById('commandMap');
+    const countElement = document.getElementById('mapPointCount');
+    const messageElement = document.getElementById('mapMessage');
+    const statusLabels = <?= json_encode(Helper::statusLabels(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    const needTypes = <?= json_encode($needTypes, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    const markerColors = {
+        pending: '#dc2626',
+        accepted: '#2563eb',
+        in_progress: '#d97706',
+        completed: '#059669',
+        cancelled: '#64748b'
+    };
+
+    if (typeof L === 'undefined') {
+        countElement.textContent = 'โหลดแผนที่ไม่สำเร็จ';
+        messageElement.textContent = 'ไม่สามารถโหลดส่วนแสดงแผนที่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่';
+        messageElement.classList.remove('hidden');
+        return;
+    }
+
+    const map = L.map(mapElement).setView([6.8, 101.3], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 19
+    }).addTo(map);
+    const markers = L.layerGroup().addTo(map);
+    const markerIndex = new Map();
+    let hasFittedMarkers = false;
+
+    function popupContent(point) {
+        const content = document.createElement('div');
+        const title = document.createElement('strong');
+        title.textContent = point.code || 'คำขอความช่วยเหลือ';
+        content.appendChild(title);
+
+        const summary = document.createElement('p');
+        summary.textContent = (point.name || 'ไม่ระบุชื่อ') + ' · ' + Number(point.people || 0).toLocaleString('th-TH') + ' คน';
+        content.appendChild(summary);
+
+        const status = document.createElement('p');
+        status.textContent = 'สถานะ: ' + (statusLabels[point.status] || point.status);
+        content.appendChild(status);
+
+        const types = document.createElement('p');
+        types.textContent = 'ความต้องการ: ' + (Array.isArray(point.types)
+            ? point.types.map(type => needTypes[type] || type).join(', ')
+            : '-');
+        content.appendChild(types);
+
+        const link = document.createElement('a');
+        link.href = window.BASE_PATH + '/admin/requests/' + encodeURIComponent(point.id);
+        link.textContent = 'ดูรายละเอียดเคส';
+        link.className = 'font-medium text-blue-700';
+        content.appendChild(link);
+        return content;
+    }
+
+    async function loadPoints() {
+        try {
+            const response = await fetch(window.BASE_PATH + '/admin/map/points', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) throw new Error('Map request failed with status ' + response.status);
+            const result = await response.json();
+            if (!result.ok || !Array.isArray(result.points)) {
+                throw new Error(result.message || 'Invalid map response');
+            }
+
+            markers.clearLayers();
+            markerIndex.clear();
+            const bounds = [];
+            result.points.forEach(point => {
+                const lat = Number(point.lat);
+                const lng = Number(point.lng);
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+                const marker = L.circleMarker([lat, lng], {
+                    radius: point.urgency === 'critical' ? 9 : 7,
+                    color: '#fff',
+                    weight: 2,
+                    fillColor: markerColors[point.status] || '#004c97',
+                    fillOpacity: 0.95
+                });
+                marker.bindPopup(popupContent(point));
+                markers.addLayer(marker);
+                markerIndex.set(String(point.id), marker);
+                bounds.push([lat, lng]);
+            });
+
+            countElement.textContent = bounds.length.toLocaleString('th-TH') + ' จุดบนแผนที่ · อัปเดตล่าสุด ' +
+                new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            messageElement.classList.toggle('hidden', bounds.length > 0);
+            messageElement.textContent = bounds.length ? '' : 'ยังไม่มีคำขอที่ระบุตำแหน่งบนแผนที่';
+            if (bounds.length && !hasFittedMarkers) {
+                map.fitBounds(bounds, { padding: [32, 32], maxZoom: 14 });
+                hasFittedMarkers = true;
+            }
+        } catch (error) {
+            countElement.textContent = 'โหลดตำแหน่งไม่สำเร็จ';
+            messageElement.textContent = 'ไม่สามารถโหลดตำแหน่งได้ กรุณาลองรีเฟรชหน้า';
+            messageElement.classList.remove('hidden');
+            console.error(error);
+        }
+    }
+
+    document.querySelectorAll('.accept-case').forEach(button => {
+        button.addEventListener('click', async () => {
+            const id = button.dataset.caseId;
+            const form = new FormData();
+            form.append('csrf_token', window.csrfToken);
+            form.append('action', 'status');
+            form.append('status', 'accepted');
+            button.disabled = true;
+            try {
+                const response = await fetch(window.BASE_PATH + '/admin/requests/' + id + '/action', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: form
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.message || 'รับเคสไม่สำเร็จ');
+                if (window.Toast) window.Toast.show('รับเคสเรียบร้อยแล้ว', 'ok');
+                setTimeout(() => window.location.reload(), 500);
+            } catch (error) {
+                button.disabled = false;
+                if (window.Toast) window.Toast.show(error.message || 'รับเคสไม่สำเร็จ', 'err');
+            }
+        });
+    });
+
+    document.querySelectorAll('.focus-case').forEach(button => {
+        button.addEventListener('click', () => {
+            const marker = markerIndex.get(button.dataset.caseId);
+            if (marker) {
+                map.setView(marker.getLatLng(), 15);
+                marker.openPopup();
+            } else {
+                map.setView([Number(button.dataset.lat), Number(button.dataset.lng)], 15);
+            }
+        });
+    });
+
+    loadPoints();
+    window.setInterval(loadPoints, 30000);
+})();
+</script>

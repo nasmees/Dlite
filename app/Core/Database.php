@@ -35,6 +35,7 @@ class Database
             if ($isNew) {
                 self::migrate();
             }
+            self::migrateAdminDirectory();
         }
         return self::$instance;
     }
@@ -155,5 +156,115 @@ class Database
                 $ins->execute($a);
             }
         }
+    }
+
+    private static function migrateAdminDirectory(): void
+    {
+            $db = self::$instance;
+            $db->exec("
+                CREATE TABLE IF NOT EXISTS organizations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    logo_url TEXT,
+                    verified INTEGER NOT NULL DEFAULT 0,
+                    contact_name TEXT,
+                    contact_phone TEXT,
+                    contact_email TEXT,
+                    description TEXT,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    is_sample INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT DEFAULT (datetime('now','localtime')),
+                    updated_at TEXT DEFAULT (datetime('now','localtime'))
+                );
+
+                CREATE TABLE IF NOT EXISTS volunteer_profiles (
+                    user_id INTEGER PRIMARY KEY,
+                    organization_id INTEGER,
+                    area_id INTEGER,
+                    availability TEXT NOT NULL DEFAULT 'available'
+                        CHECK(availability IN ('available', 'busy')),
+                    skills_json TEXT NOT NULL DEFAULT '[]',
+                    equipment_json TEXT NOT NULL DEFAULT '[]',
+                    is_sample INTEGER NOT NULL DEFAULT 0,
+                    updated_at TEXT DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+                    FOREIGN KEY (area_id) REFERENCES areas(id) ON DELETE SET NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_volunteer_profiles_org
+                    ON volunteer_profiles(organization_id);
+                CREATE INDEX IF NOT EXISTS idx_volunteer_profiles_area
+                    ON volunteer_profiles(area_id);
+
+                CREATE TABLE IF NOT EXISTS admin_migrations (
+                    version TEXT PRIMARY KEY,
+                    applied_at TEXT DEFAULT (datetime('now','localtime'))
+                );
+            ");
+
+            $version = 'admin_directory_demo_v1';
+            $stmt = $db->prepare("SELECT 1 FROM admin_migrations WHERE version = ?");
+            $stmt->execute([$version]);
+            if ($stmt->fetchColumn()) {
+                return;
+            }
+
+            $db->beginTransaction();
+            try {
+                $organizations = [
+                    ['เครือข่ายอาสากู้ภัย (ตัวอย่าง)', 'เครือข่ายอาสาสมัครช่วยเหลือและกู้ภัยในพื้นที่', '02-000-0001'],
+                    ['ทีมปฐมพยาบาลชุมชน (ตัวอย่าง)', 'ทีมสนับสนุนการปฐมพยาบาลและดูแลผู้ประสบภัย', '02-000-0002'],
+                    ['กลุ่มสนับสนุนทางน้ำ (ตัวอย่าง)', 'ทีมสนับสนุนการเดินทางและอุปกรณ์ทางน้ำ', '02-000-0003'],
+                ];
+                $insertOrganization = $db->prepare("
+                    INSERT INTO organizations
+                        (name, contact_name, contact_phone, description, is_sample)
+                    VALUES (?, 'ผู้ประสานงานตัวอย่าง', ?, ?, 1)
+                ");
+                $organizationIds = [];
+                foreach ($organizations as [$name, $description, $phone]) {
+                    $insertOrganization->execute([$name, $phone, $description]);
+                    $organizationIds[] = (int)$db->lastInsertId();
+                }
+
+                $areaIds = $db->query("SELECT id FROM areas ORDER BY id")->fetchAll(PDO::FETCH_COLUMN);
+                $samples = [
+                    ['อาสาสมัครตัวอย่าง 01', 0, 'available', ['first_aid', 'rescue'], ['first_aid_kit']],
+                    ['อาสาสมัครตัวอย่าง 02', 1, 'busy', ['medical'], ['vehicle']],
+                    ['อาสาสมัครตัวอย่าง 03', 2, 'available', ['boat_rescue'], ['boat', 'life_jacket']],
+                    ['อาสาสมัครตัวอย่าง 04', 0, 'busy', ['logistics'], ['radio']],
+                ];
+                $insertUser = $db->prepare("
+                    INSERT INTO users (name, password_hash, role, is_active)
+                    VALUES (?, ?, 'volunteer', 0)
+                ");
+                $insertProfile = $db->prepare("
+                    INSERT INTO volunteer_profiles
+                        (user_id, organization_id, area_id, availability, skills_json, equipment_json, is_sample)
+                    VALUES (?, ?, ?, ?, ?, ?, 1)
+                ");
+                foreach ($samples as $index => [$name, $areaIndex, $availability, $skills, $equipment]) {
+                    $insertUser->execute([$name, password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT)]);
+                    $userId = (int)$db->lastInsertId();
+                    $areaId = $areaIds ? (int)$areaIds[$areaIndex % count($areaIds)] : null;
+                    $insertProfile->execute([
+                        $userId,
+                        $organizationIds[$index % count($organizationIds)],
+                        $areaId,
+                        $availability,
+                        json_encode($skills, JSON_UNESCAPED_UNICODE),
+                        json_encode($equipment, JSON_UNESCAPED_UNICODE),
+                    ]);
+                }
+
+                $db->prepare("INSERT INTO admin_migrations (version) VALUES (?)")->execute([$version]);
+                $db->commit();
+            } catch (Throwable $e) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+                throw $e;
+            }
     }
 }

@@ -5,28 +5,29 @@ $qs = function(array $over = []) use ($filters) {
     return Helper::url('admin/requests' . ($p ? '?' . http_build_query($p) : ''));
 };
 ?>
-<div class="space-y-5">
+<div class="space-y-5 lg:space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">คำขอความช่วยเหลือ</h1>
+            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">คำขอความช่วยเหลือ</h1>
             <p class="text-slate-500 mt-1">ทั้งหมด <?= (int)($counts['all'] ?? 0) ?> รายการ</p>
         </div>
     </div>
 
     <!-- Status quick filters -->
-    <div class="flex gap-2 overflow-x-auto pb-1">
+    <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" role="navigation" aria-label="กรองตามสถานะ">
         <?php
         $tabs = [
-            '' => ['ทั้งหมด', $counts['all'] ?? 0, 'bg-slate-700'],
-            'pending' => ['รอรับเรื่อง', $counts['pending'] ?? 0, 'bg-red-600'],
-            'accepted' => ['รับเรื่องแล้ว', $counts['accepted'] ?? 0, 'bg-blue-600'],
-            'in_progress' => ['กำลังช่วย', $counts['in_progress'] ?? 0, 'bg-amber-500'],
-            'completed' => ['สำเร็จ', $counts['completed'] ?? 0, 'bg-emerald-600'],
-            'cancelled' => ['ยกเลิก', $counts['cancelled'] ?? 0, 'bg-slate-400'],
+            '' => ['ทั้งหมด', $counts['all'] ?? 0],
+            'pending' => ['รอรับเรื่อง', $counts['pending'] ?? 0],
+            'accepted' => ['รับเรื่องแล้ว', $counts['accepted'] ?? 0],
+            'in_progress' => ['กำลังช่วย', $counts['in_progress'] ?? 0],
+            'completed' => ['สำเร็จ', $counts['completed'] ?? 0],
+            'cancelled' => ['ยกเลิก', $counts['cancelled'] ?? 0],
         ];
-        foreach ($tabs as $val => [$label, $count, $bg]): ?>
+        foreach ($tabs as $val => [$label, $count]): ?>
             <a href="<?= $qs(['status' => $val]) ?>"
-               class="shrink-0 relative px-4 py-2 rounded-lg text-sm font-medium transition <?= ($filters['status'] ?? '') === $val ? $bg . ' text-white' : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300' ?>">
+               aria-current="<?= ($filters['status'] ?? '') === $val ? 'page' : 'false' ?>"
+               class="shrink-0 relative px-4 py-2 rounded-full text-sm font-medium transition <?= ($filters['status'] ?? '') === $val ? 'bg-brand-100 text-brand-800' : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50' ?>">
                 <?= Helper::e($label) ?>
                 <span class="ml-1.5 text-xs opacity-80"><?= (int)$count ?></span>
             </a>
@@ -34,22 +35,22 @@ $qs = function(array $over = []) use ($filters) {
     </div>
 
     <!-- Search + urgency filter -->
-    <form method="get" class="flex gap-2">
+    <form method="get" class="flex flex-col sm:flex-row gap-2">
         <?php if (($filters['status'] ?? '') !== ''): ?><input type="hidden" name="status" value="<?= Helper::e($filters['status']) ?>"><?php endif; ?>
         <input type="search" name="q" value="<?= Helper::e($filters['q'] ?? '') ?>" placeholder="ค้นหา ชื่อ / รหัส / ที่อยู่ / รายละเอียด..." class="input-field flex-1">
-        <select name="urgency" class="input-field w-36" onchange="this.form.submit()">
+        <select name="urgency" class="input-field w-full sm:w-44" onchange="this.form.submit()">
             <option value="">ทุกความเร่งด่วน</option>
             <?php foreach ($urgencyLabels as $k => $v): ?>
                 <option value="<?= $k ?>" <?= ($filters['urgency'] ?? '') === $k ? 'selected' : '' ?>><?= Helper::e($v) ?></option>
             <?php endforeach; ?>
         </select>
-        <button type="submit" class="btn-primary px-4">ค้นหา</button>
+        <button type="submit" class="btn-primary px-5 shrink-0">ค้นหา</button>
     </form>
 
     <!-- Table -->
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full min-w-[900px] text-sm">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 text-left">
                         <th class="px-4 py-3 font-medium text-slate-600">รหัส / ผู้แจ้ง</th>
