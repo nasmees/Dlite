@@ -1,12 +1,26 @@
 <div class="command-center">
+    <div class="admin-stats">
+        <?php
+        $statItems = [
+            ['ทั้งหมด', $stats['total'] ?? 0, '#004c97'],
+            ['รอรับเรื่อง', $stats['pending'] ?? 0, '#dc2626'],
+            ['กำลังดำเนินการ', $stats['active'] ?? 0, '#2563eb'],
+            ['เพิ่มวันนี้', $stats['today'] ?? 0, '#059669'],
+            ['วิกฤตค้าง', $stats['critical'] ?? 0, '#d97706'],
+        ];
+        foreach ($statItems as [$lbl, $val, $color]): ?>
+            <div class="admin-stat"><span class="num" style="color:<?= $color ?>"><?= (int)$val ?></span><span class="lbl"><?= Helper::e($lbl) ?></span></div>
+        <?php endforeach; ?>
+    </div>
+
     <section class="command-cases bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div class="p-4 border-b border-slate-200">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h2 class="font-semibold text-slate-900">เคสเร่งด่วน</h2>
+                    <h2 class="font-semibold text-slate-900 flex items-center gap-2"><svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>เคสเร่งด่วน</h2>
                     <p class="text-sm text-slate-500 mt-1">คำขอที่รอรับเรื่องและต้องประสานงาน</p>
                 </div>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+                <span id="pendingCaseBadge" class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
                     <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
                     <?= count($cases) ?> เคส
                 </span>
@@ -32,6 +46,11 @@
                                     <span class="rounded-full px-2 py-0.5 text-xs font-medium <?= Helper::urgencyColor($case['urgency']) ?>">
                                         <?= Helper::e($urgencyLabels[$case['urgency']] ?? $case['urgency']) ?>
                                     </span>
+                                    <?php if (!empty($case['scenario'])): ?>
+                                        <span class="rounded-full px-2 py-0.5 text-xs font-medium bg-brand-50 text-brand-700">
+                                            <?= Helper::e(Helper::scenarioLabels()[$case['scenario']] ?? $case['scenario']) ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                                 <p class="text-sm text-slate-700 mt-1"><?= Helper::e($case['reporter_name']) ?> · <?= (int)$case['people_count'] ?> คน</p>
                                 <p class="text-xs text-slate-500 mt-1">
@@ -74,7 +93,7 @@
     <section class="command-map-panel bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-200">
             <div>
-                <h2 class="font-semibold text-slate-900">แผนที่สถานการณ์</h2>
+                <h2 class="font-semibold text-slate-900 flex items-center gap-2"><svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>แผนที่สถานการณ์</h2>
                 <p id="mapPointCount" class="text-sm text-slate-500 mt-1" role="status" aria-live="polite">กำลังโหลดตำแหน่ง…</p>
             </div>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
@@ -84,6 +103,20 @@
                 <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-emerald-600"></i>เสร็จสิ้น</span>
                 <span class="inline-flex items-center gap-1.5"><i class="map-legend-dot bg-slate-500"></i>ยกเลิก</span>
             </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 px-4 py-2 border-b border-slate-100" id="mapFilters" role="group" aria-label="กรองแผนที่ตามสถานะ">
+            <?php
+            $mapFilters = [
+                'all' => 'ทั้งหมด',
+                'pending' => 'รอรับเรื่อง',
+                'accepted' => 'รับเรื่องแล้ว',
+                'in_progress' => 'กำลังช่วย',
+                'completed' => 'สำเร็จ',
+                'cancelled' => 'ยกเลิก',
+            ];
+            foreach ($mapFilters as $fv => $fl): ?>
+                <button type="button" class="map-filter-btn <?= $fv === 'all' ? 'active' : '' ?>" data-status="<?= $fv ?>"><?= Helper::e($fl) ?></button>
+            <?php endforeach; ?>
         </div>
         <div class="relative flex-1 min-h-0">
             <div id="commandMap" class="command-map w-full" role="application" aria-label="แผนที่แสดงตำแหน่งคำขอความช่วยเหลือ"></div>
@@ -122,6 +155,8 @@
     const markers = L.layerGroup().addTo(map);
     const markerIndex = new Map();
     let hasFittedMarkers = false;
+    let currentStatus = 'all';
+    let lastPending = <?= (int)($stats['pending'] ?? 0) ?>;
 
     function popupContent(point) {
         const content = document.createElement('div');
@@ -153,7 +188,8 @@
 
     async function loadPoints() {
         try {
-            const response = await fetch(window.BASE_PATH + '/admin/map/points', {
+            const url = window.BASE_PATH + '/admin/map/points' + (currentStatus !== 'all' ? '?status=' + encodeURIComponent(currentStatus) : '');
+            const response = await fetch(url, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             if (!response.ok) throw new Error('Map request failed with status ' + response.status);
@@ -191,6 +227,7 @@
                 map.fitBounds(bounds, { padding: [32, 32], maxZoom: 14 });
                 hasFittedMarkers = true;
             }
+            map.invalidateSize();
         } catch (error) {
             countElement.textContent = 'โหลดตำแหน่งไม่สำเร็จ';
             messageElement.textContent = 'ไม่สามารถโหลดตำแหน่งได้ กรุณาลองรีเฟรชหน้า';
@@ -224,6 +261,32 @@
         });
     });
 
+    document.querySelectorAll('#mapFilters .map-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#mapFilters .map-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentStatus = btn.dataset.status;
+            hasFittedMarkers = false;
+            loadPoints();
+        });
+    });
+
+    async function pollPending() {
+        try {
+            const res = await fetch(window.BASE_PATH + '/admin/requests/pending-count', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const json = await res.json();
+            if (!json.ok) return;
+            const badge = document.getElementById('pendingCaseBadge');
+            if (badge) badge.textContent = Number(json.count).toLocaleString('th-TH') + ' เคส';
+            if (json.count > lastPending && window.Toast) {
+                Toast.show('มีเคสใหม่รอรับเรื่อง ' + Number(json.count).toLocaleString('th-TH') + ' เคส', 'info');
+            }
+            lastPending = json.count;
+        } catch (e) { /* silent — next poll retries */ }
+    }
+
     document.querySelectorAll('.focus-case').forEach(button => {
         button.addEventListener('click', () => {
             const marker = markerIndex.get(button.dataset.caseId);
@@ -237,6 +300,7 @@
     });
 
     loadPoints();
-    window.setInterval(loadPoints, 30000);
+    pollPending();
+    window.setInterval(() => { loadPoints(); pollPending(); }, 30000);
 })();
 </script>

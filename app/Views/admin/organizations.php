@@ -1,7 +1,10 @@
 <div class="space-y-5 lg:space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-            <h2 class="text-2xl font-semibold text-slate-900">องค์กรเครือข่าย</h2>
+            <h2 class="text-2xl font-semibold text-slate-900 flex items-center gap-2.5">
+                <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01"/></svg>
+                องค์กรเครือข่าย
+            </h2>
             <p class="text-sm text-slate-500 mt-1">จัดการหน่วยงานพันธมิตรและข้อมูลผู้ประสานงาน</p>
         </div>
         <button type="button" id="addOrganization" class="btn-primary inline-flex items-center justify-center gap-2">

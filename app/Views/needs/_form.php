@@ -37,6 +37,7 @@ $needIcons = [
     <input type="hidden" name="lat" id="rLat">
     <input type="hidden" name="lng" id="rLng">
     <input type="hidden" name="urgency" id="rUrgency" value="normal">
+    <input type="hidden" name="scenario" id="rScenario">
 
     <div class="sheet-body px-4 py-4 space-y-4">
         <?php if (!empty($inDrawer)): ?>
@@ -61,6 +62,7 @@ $needIcons = [
                                    <?= $s['sos'] ? 'border-red-200 bg-red-50' : 'border-slate-300 bg-white' ?>"
                             data-types="<?= implode(',', $s['types']) ?>"
                             data-urgency="<?= $s['urgency'] ?>"
+                            data-scenario="<?= $s['key'] ?>"
                             data-sos="<?= $s['sos'] ? '1' : '0' ?>">
                         <span class="scenario-icon w-12 h-12 rounded-xl flex items-center justify-center shrink-0 <?= $s['sos'] ? 'bg-red-100 text-red-600' : 'bg-brand-50 text-brand-600' ?>">
                             <?= $icons[$s['key']] ?? '' ?>
@@ -220,6 +222,7 @@ $needIcons = [
     const latInput = document.getElementById('rLat');
     const lngInput = document.getElementById('rLng');
     const urgencyInput = document.getElementById('rUrgency');
+    const scenarioInput = document.getElementById('rScenario');
     const submitBtn = document.getElementById('rf_submit');
     const gpsStatus = document.getElementById('gpsStatus');
     const gpsDot = document.getElementById('gpsDot');
@@ -249,6 +252,7 @@ $needIcons = [
                 cb.checked = types.includes(cb.value);
             });
             urgencyInput.value = btn.dataset.urgency;
+            scenarioInput.value = btn.dataset.scenario;
             selectedScenario = btn.dataset.types;
             updateCtaColor(isSos || btn.dataset.urgency === 'critical');
             saveDraft();
@@ -271,6 +275,7 @@ $needIcons = [
             area_id: document.getElementById('rf_area').value,
             lat: latInput.value, lng: lngInput.value,
             urgency: urgencyInput.value,
+            scenario: scenarioInput.value,
             need_types: Array.from(form.querySelectorAll('input[name="need_types[]"]:checked')).map(c => c.value)
         };
     }
@@ -293,6 +298,10 @@ $needIcons = [
                 const cb = form.querySelector(`input[name="need_types[]"][value="${t}"]`);
                 if (cb) cb.checked = true;
             });
+        }
+        if (draft.scenario) {
+            const btn = form.querySelector(`.scenario-btn[data-scenario="${draft.scenario}"]`);
+            if (btn) btn.click();
         }
         if (draft.lat && draft.lng) {
             gpsStatus.textContent = "✓ พบตำแหน่งของคุณแล้ว";

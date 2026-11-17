@@ -14,11 +14,11 @@ class Need
             INSERT INTO needs (
                 code, reporter_name, reporter_phone, area_id, address,
                 lat, lng, people_count, need_types, description,
-                urgency, status, photo_path
+                urgency, status, photo_path, scenario
             ) VALUES (
                 :code, :reporter_name, :reporter_phone, :area_id, :address,
                 :lat, :lng, :people_count, :need_types, :description,
-                :urgency, 'pending', :photo_path
+                :urgency, 'pending', :photo_path, :scenario
             )
         ");
 
@@ -37,6 +37,7 @@ class Need
             ':description' => $data['description'] ?? null,
             ':urgency' => $data['urgency'] ?? 'normal',
             ':photo_path' => $data['photo_path'] ?? null,
+            ':scenario' => $data['scenario'] ?? null,
         ]);
 
         $id = (int)$db->lastInsertId();
@@ -103,9 +104,10 @@ class Need
         }
 
         $sql = "
-            SELECT n.*, a.name as area_name, a.province
+            SELECT n.*, a.name as area_name, a.province, u.name as assigned_name
             FROM needs n
             LEFT JOIN areas a ON a.id = n.area_id
+            LEFT JOIN users u ON u.id = n.assigned_to
             WHERE " . implode(' AND ', $where) . "
             ORDER BY 
                 CASE n.urgency 
@@ -155,10 +157,54 @@ class Need
             $where[] = 'status = ?';
             $params[] = $filters['status'];
         }
+        if (!empty($filters['urgency'])) {
+            $where[] = 'urgency = ?';
+            $params[] = $filters['urgency'];
+        }
         $sql = "SELECT COUNT(*) FROM needs WHERE " . implode(' AND ', $where);
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
         return (int)$stmt->fetchColumn();
+    }
+
+    public static function countToday(): int
+    {
+        $db = Database::getInstance();
+        return (int)$db->query("SELECT COUNT(*) FROM needs WHERE created_at >= date('now','localtime')")->fetchColumn();
+    }
+
+    /**
+     * Update editable request fields (admin/staff correction)
+     */
+    public static function updateDetails(int $id, array $data): bool
+    {
+        $db = Database::getInstance();
+        $fields = [];
+        $params = [];
+        $map = [
+            'reporter_name' => 'reporter_name',
+            'reporter_phone' => 'reporter_phone',
+            'area_id' => 'area_id',
+            'address' => 'address',
+            'lat' => 'lat',
+            'lng' => 'lng',
+            'people_count' => 'people_count',
+            'need_types' => 'need_types',
+            'description' => 'description',
+            'urgency' => 'urgency',
+            'scenario' => 'scenario',
+        ];
+        foreach ($map as $key => $col) {
+            if (array_key_exists($key, $data)) {
+                $fields[] = "{$col} = ?";
+                $params[] = $data[$key];
+            }
+        }
+        if (!$fields) return false;
+        $params[] = $id;
+        $stmt = $db->prepare("UPDATE needs SET " . implode(', ', $fields) . ", updated_at = datetime('now','localtime') WHERE id = ?");
+        $stmt->execute($params);
+        return $stmt->rowCount() > 0 || self::find($id) !== null;
     }
 
     public static function updateStatus(int $id, string $status, ?int $userId = null, ?string $message = null): bool
@@ -174,6 +220,14 @@ class Need
            ->execute([$id, $userId, $need['status'], $status, $message]);
 
         return true;
+    }
+
+    public static function delete(int $id): bool
+    {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("DELETE FROM needs WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->rowCount() > 0;
     }
 
     public static function assign(int $id, int $userId): bool

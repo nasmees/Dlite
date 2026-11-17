@@ -123,14 +123,29 @@
         .command-center {
             display: grid;
             grid-template-columns: minmax(350px, 390px) minmax(0, 1fr);
+            grid-template-rows: auto minmax(0, 1fr);
             gap: 1rem;
             height: calc(100dvh - 2rem);
             min-height: 480px;
         }
+        .admin-stats { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem; }
+        .admin-stat {
+            display: flex; align-items: baseline; gap: .4rem;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: .6rem;
+            padding: .45rem .8rem;
+        }
+        .admin-stat .num { font-weight: 700; font-size: 1.05rem; line-height: 1.1; color: #004c97; }
+        .admin-stat .lbl { font-size: .72rem; color: #64748b; white-space: nowrap; }
+        .map-filter-btn {
+            padding: .3rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 500;
+            background: #f1f5f9; color: #475569; transition: background .15s ease, color .15s ease;
+        }
+        .map-filter-btn:hover { background: #e2e8f0; }
+        .map-filter-btn.active { background: #004c97; color: #fff; }
         .command-cases,
         .command-map-panel { min-height: 0; display: flex; flex-direction: column; }
         .command-case-list { overflow-y: auto; overscroll-behavior: contain; }
-        .command-map { flex: 1; min-height: 0; background: #f1f5f9; }
+        .command-map { height: 100%; min-height: 0; background: #f1f5f9; }
         .map-legend-dot { width: .55rem; height: .55rem; border-radius: 999px; display: inline-block; }
         .admin-content a:focus-visible,
         .admin-content button:focus-visible,
@@ -210,16 +225,32 @@
             $reqPath = substr($reqPath, strlen($base)) ?: '/';
         }
         $adminNav = 'command';
-        if (str_starts_with($reqPath, '/admin/volunteers')) $adminNav = 'volunteers';
+        if (str_starts_with($reqPath, '/admin/requests')) $adminNav = 'requests';
+        elseif (str_starts_with($reqPath, '/admin/volunteers')) $adminNav = 'volunteers';
         elseif (str_starts_with($reqPath, '/admin/organizations')) $adminNav = 'organizations';
+        elseif (str_starts_with($reqPath, '/admin/areas')) $adminNav = 'areas';
+        elseif (str_starts_with($reqPath, '/admin/announcements')) $adminNav = 'announcements';
         $roleLabels = ['admin' => 'ผู้ดูแลระบบ', 'volunteer' => 'อาสาสมัคร', 'viewer' => 'ผู้ดู'];
         $roleLabel = $roleLabels[$user['role'] ?? ''] ?? ($user['role'] ?? '');
     ?>
+    <!-- Top bar (mobile) -->
+    <header class="fixed top-0 inset-x-0 z-30 lg:hidden bg-white border-b border-slate-200">
+        <div class="flex items-center gap-1 h-14 px-2">
+            <button id="menuToggle" type="button" class="inline-flex items-center justify-center w-11 h-11 rounded-lg text-slate-700 hover:bg-slate-100" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="sidebar">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <div class="flex items-center gap-2.5 min-w-0 px-1">
+                <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 font-semibold text-xs">DR</div>
+                <div class="min-w-0">
+                    <p class="font-semibold text-slate-800 leading-tight truncate">Relief Admin</p>
+                    <p class="text-xs text-slate-500 truncate">Disaster Relief System</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
     <!-- Sidebar Overlay (mobile) -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/40 z-30 lg:hidden" aria-hidden="true"></div>
-    <button id="menuToggle" type="button" class="fixed bottom-4 left-4 z-20 lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-md" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="sidebar">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
     
     <!-- Sidebar: fixed on desktop, drawer on mobile -->
     <aside id="sidebar" class="admin-sidebar flex flex-col">
@@ -243,6 +274,14 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 4.75A1.75 1.75 0 014.75 3h14.5A1.75 1.75 0 0121 4.75v14.5A1.75 1.75 0 0119.25 21H4.75A1.75 1.75 0 013 19.25V4.75zM9 3v18m6-18v18M3 9h6m0 6h-6m12-6h6m-6 6h6"/></svg>
                     <span class="sidebar-link-label">ศูนย์บัญชาการ</span>
                 </a>
+                <a href="<?= Helper::url('admin/requests') ?>" title="จัดการคำขอ" class="sidebar-link <?= $adminNav === 'requests' ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="sidebar-link-label">จัดการคำขอ</span>
+                </a>
+                <a href="<?= Helper::url('admin/announcements') ?>" title="ประกาศ" class="sidebar-link <?= $adminNav === 'announcements' ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                    <span class="sidebar-link-label">ประกาศ</span>
+                </a>
                 <?php if (!empty($isAdmin)): ?>
                 <a href="<?= Helper::url('admin/volunteers') ?>" title="อาสาสมัคร" class="sidebar-link <?= $adminNav === 'volunteers' ? 'active' : '' ?>">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m6-10a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
@@ -251,6 +290,10 @@
                 <a href="<?= Helper::url('admin/organizations') ?>" title="องค์กรเครือข่าย" class="sidebar-link <?= $adminNav === 'organizations' ? 'active' : '' ?>">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
                     <span class="sidebar-link-label">องค์กรเครือข่าย</span>
+                </a>
+                <a href="<?= Helper::url('admin/areas') ?>" title="จัดการพื้นที่" class="sidebar-link <?= $adminNav === 'areas' ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="sidebar-link-label">จัดการพื้นที่</span>
                 </a>
                 <?php endif; ?>
             </div>
@@ -278,8 +321,17 @@
         </div>
     </aside>
     
+    <?php if ($reqPath !== '/admin/requests/create'): ?>
+    <!-- Quick-add case FAB (all admin pages) -->
+    <a href="<?= Helper::url('admin/requests/create') ?>" aria-label="เพิ่มเคสใหม่"
+       class="fixed bottom-5 right-5 z-[1001] inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm pl-4 pr-5 py-3 shadow-lg shadow-red-600/30 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        แจ้งเหตุ
+    </a>
+    <?php endif; ?>
+
     <!-- Main Content -->
-    <div id="mainContent" class="min-h-screen flex flex-col">
+    <div id="mainContent" class="min-h-screen flex flex-col pt-14 lg:pt-0">
         <!-- Page Content -->
         <main class="admin-content flex-1 <?= !empty($isCommandCenter) ? 'p-3 lg:p-4' : 'p-4 lg:p-6' ?>">
             <?= $content ?>
@@ -329,5 +381,7 @@
             });
         });
     </script>
+
+    <?php require APP_PATH . '/Views/partials/announcement_popup.php'; ?>
 </body>
 </html>

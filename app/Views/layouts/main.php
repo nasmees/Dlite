@@ -320,5 +320,7 @@
     <?php if (!empty($extraJs)): ?>
         <?= $extraJs ?>
     <?php endif; ?>
+
+    <?php require APP_PATH . '/Views/partials/announcement_popup.php'; ?>
 </body>
 </html>

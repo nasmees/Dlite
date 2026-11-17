@@ -3,7 +3,10 @@
 ?>
 <div class="space-y-5">
     <div>
-        <h1 class="text-2xl font-bold text-slate-800">จัดการพื้นที่</h1>
+        <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2.5">
+            <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            จัดการพื้นที่
+        </h1>
         <p class="text-slate-500 mt-1">พื้นที่/ตำบลที่ใช้ในแบบฟอร์มแจ้งเหตุ (<?= count($areas) ?> รายการ)</p>
     </div>
 

@@ -28,6 +28,21 @@ class Helper
         ];
     }
 
+    /**
+     * Scenario keys used by the public report form's "เกิดอะไรขึ้น?" cards
+     */
+    public static function scenarioLabels(): array
+    {
+        return [
+            'flood' => 'น้ำท่วม / ถนนท่วม',
+            'evac' => 'ต้องอพยพ / บ้านเสียหาย',
+            'sos' => 'เหตุฉุกเฉิน SOS',
+            'medical' => 'เจ็บป่วย / บาดเจ็บ',
+            'supplies' => 'ขาดแคลนอาหาร / น้ำ',
+            'other' => 'อื่นๆ',
+        ];
+    }
+
     public static function urgencyLabels(): array
     {
         return [
@@ -47,6 +62,22 @@ class Helper
             'completed' => 'เสร็จสิ้น',
             'cancelled' => 'ยกเลิก',
         ];
+    }
+
+    /**
+     * Colored dot matching map marker colors — for status badges
+     */
+    public static function statusDot(string $status): string
+    {
+        $colors = [
+            'pending' => '#dc2626',
+            'accepted' => '#2563eb',
+            'in_progress' => '#d97706',
+            'completed' => '#059669',
+            'cancelled' => '#64748b',
+        ];
+        $c = $colors[$status] ?? '#64748b';
+        return '<span class="inline-block w-1.5 h-1.5 rounded-full align-middle" style="background:' . $c . '"></span>';
     }
 
     public static function statusColor(string $status): string

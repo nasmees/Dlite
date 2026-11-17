@@ -1,7 +1,10 @@
 <div class="space-y-5 lg:space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-            <h2 class="text-2xl font-semibold text-slate-900">อาสาสมัคร</h2>
+            <h2 class="text-2xl font-semibold text-slate-900 flex items-center gap-2.5">
+                <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m6-10a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                อาสาสมัคร
+            </h2>
             <p class="text-sm text-slate-500 mt-1">จัดการข้อมูล ทักษะ และสถานะการปฏิบัติงาน</p>
         </div>
         <button type="button" id="addVolunteer" class="btn-primary inline-flex items-center justify-center gap-2">
@@ -293,7 +296,7 @@
             const body = new FormData();
             body.append('csrf_token', csrf);
             try {
-                const response = await fetch(window.BASE_PATH + '/admin/users/' + button.dataset.id + '/toggle', {
+                const response = await fetch(window.BASE_PATH + '/admin/volunteers/' + button.dataset.id + '/toggle', {
                     method: 'POST',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     body

@@ -55,6 +55,12 @@ $router->get('/login', [AuthController::class, 'loginForm']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->get('/logout', [AuthController::class, 'logout']);
 
+// Announcements (broadcast popup)
+$router->get('/announcements/latest', [AdminController::class, 'latestAnnouncement']);
+$router->get('/admin/announcements', [AdminController::class, 'announcements']);
+$router->post('/admin/announcements', [AdminController::class, 'saveAnnouncement']);
+$router->post('/admin/announcements/{id}/delete', [AdminController::class, 'deleteAnnouncement']);
+
 // Admin
 $router->get('/admin', [AdminController::class, 'index']);
 $router->get('/admin/map', [AdminController::class, 'map']);
@@ -62,16 +68,20 @@ $router->get('/admin/map/points', [AdminController::class, 'mapPoints']);
 $router->get('/admin/volunteers', [AdminController::class, 'volunteers']);
 $router->post('/admin/volunteers', [AdminController::class, 'saveVolunteer']);
 $router->post('/admin/volunteers/{id}/availability', [AdminController::class, 'updateVolunteerAvailability']);
+$router->post('/admin/volunteers/{id}/toggle', [AdminController::class, 'toggleVolunteerAccount']);
 $router->get('/admin/organizations', [AdminController::class, 'organizations']);
 $router->post('/admin/organizations', [AdminController::class, 'saveOrganization']);
 $router->post('/admin/organizations/{id}/toggle', [AdminController::class, 'toggleOrganization']);
 $router->get('/admin/requests', [AdminController::class, 'requests']);
+$router->get('/admin/requests/create', [AdminController::class, 'createRequestForm']);
+$router->post('/admin/requests/create', [AdminController::class, 'createRequest']);
+$router->get('/admin/requests/pending-count', [AdminController::class, 'pendingCount']);
+$router->get('/admin/requests/export', [AdminController::class, 'exportRequests']);
+$router->post('/admin/requests/bulk', [AdminController::class, 'bulkRequestAction']);
 $router->get('/admin/requests/{id}', [AdminController::class, 'requestDetail']);
 $router->post('/admin/requests/{id}/action', [AdminController::class, 'requestAction']);
-$router->get('/admin/users', [AdminController::class, 'users']);
-$router->post('/admin/users', [AdminController::class, 'createUser']);
-$router->post('/admin/users/{id}', [AdminController::class, 'updateUser']);
-$router->post('/admin/users/{id}/toggle', [AdminController::class, 'toggleUser']);
+$router->post('/admin/requests/{id}/update', [AdminController::class, 'updateRequest']);
+$router->post('/admin/requests/{id}/delete', [AdminController::class, 'deleteRequest']);
 $router->get('/admin/areas', [AdminController::class, 'areas']);
 $router->post('/admin/areas', [AdminController::class, 'saveArea']);
 $router->post('/admin/areas/{id}/delete', [AdminController::class, 'deleteArea']);
