@@ -211,6 +211,21 @@ class Database
                     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
                 );
 
+                CREATE TABLE IF NOT EXISTS pois (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    category TEXT NOT NULL DEFAULT 'other',
+                    description TEXT,
+                    lat REAL NOT NULL,
+                    lng REAL NOT NULL,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_by INTEGER,
+                    created_at TEXT DEFAULT (datetime('now','localtime')),
+                    updated_at TEXT DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_pois_active ON pois(is_active);
+
                 CREATE TABLE IF NOT EXISTS admin_migrations (
                     version TEXT PRIMARY KEY,
                     applied_at TEXT DEFAULT (datetime('now','localtime'))

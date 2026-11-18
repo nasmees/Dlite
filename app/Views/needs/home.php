@@ -28,13 +28,15 @@
         <div class="flex items-center gap-2 mb-2">
             <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             <h2 class="font-semibold text-slate-800">แผนที่เหตุการณ์ในพื้นที่</h2>
+            <a href="<?= Helper::url('map') ?>" class="ml-auto text-sm font-semibold text-brand-600">แผนที่เต็ม →</a>
         </div>
         <div class="card !p-0 overflow-hidden relative">
             <div id="homeMap" class="w-full" style="height:55dvh;min-height:300px"></div>
 
             <!-- Status filter chips -->
             <div class="absolute top-2 right-2 z-[1001] flex gap-2 overflow-x-auto pb-1">
-                <button type="button" data-status="all" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white shadow">ทั้งหมด</button>
+                <button type="button" data-status="active" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white shadow">ต้องการความช่วย</button>
+                <button type="button" data-status="all" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-slate-700 shadow">ทั้งหมด</button>
                 <button type="button" data-status="pending" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-red-700 shadow">รอช่วยเหลือ</button>
                 <button type="button" data-status="in_progress" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-amber-700 shadow">กำลังช่วย</button>
                 <button type="button" data-status="completed" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-emerald-700 shadow">สำเร็จแล้ว</button>
@@ -45,6 +47,7 @@
                 <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#DC2626"></span>รอช่วยเหลือ</div>
                 <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#EAB308"></span>กำลังเข้าพื้นที่</div>
                 <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#16A34A"></span>ช่วยเหลือแล้ว</div>
+                <div class="flex items-center gap-1.5"><span>⛺📦🏥</span>จุดสำคัญ</div>
             </div>
 
         </div>
@@ -166,8 +169,37 @@ window.addEventListener('error', function(e) {
     }).addTo(map);
 
     let markersLayer = L.layerGroup().addTo(map);
+    let poisLayer = L.layerGroup().addTo(map);
     let markerIndex = {}; // id -> marker
     const myReport = (window.getMyReport ? window.getMyReport() : null);
+
+    // Important places (shelters, evacuation points…) — always visible
+    const escHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function loadPois() {
+        try {
+            const res = await fetch(window.BASE_PATH + '/api/pois');
+            const json = await res.json();
+            if (!json.ok) return;
+            json.pois.forEach(p => {
+                const icon = L.divIcon({
+                    className: '',
+                    html: `<div style="font-size:24px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">${p.emoji}</div>`,
+                    iconSize: [28, 28], iconAnchor: [14, 14]
+                });
+                const m = L.marker([p.lat, p.lng], { icon });
+                m.bindPopup(`
+                    <div style="font-family:Kanit,sans-serif;min-width:190px">
+                        <strong style="font-size:15px">${p.emoji} ${escHtml(p.title)}</strong><br>
+                        <span style="color:${p.color};font-weight:600;font-size:12px">${escHtml(p.category_label)}</span>
+                        ${p.description ? '<br><span style="font-size:13px;color:#475569">' + escHtml(p.description) + '</span>' : ''}
+                        <br><a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-weight:700;color:#EA580C">🧭 นำทางไปจุดนี้ →</a>
+                    </div>
+                `);
+                poisLayer.addLayer(m);
+            });
+        } catch (e) { console.error(e); }
+    }
+    loadPois();
 
     const statusColors = {
         pending: '#DC2626',      // red — waiting for help
@@ -205,8 +237,9 @@ window.addEventListener('error', function(e) {
                 m.bindPopup(`
                     <div style="font-family:Kanit,sans-serif;min-width:170px">
                         <strong>${isMine ? 'จุดแจ้งเหตุของคุณ — ' : ''}${p.code}</strong><br>
-                        ${p.name}<br>
+                        ${p.name ? p.name + '<br>' : ''}${p.place ? p.place + '<br>' : ''}
                         ผู้ได้รับผลกระทบ ${p.people} คน<br>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank" rel="noopener" style="color:#EA580C;font-weight:600">🧭 นำทาง →</a><br>
                         <a href="${window.BASE_PATH}/needs/${p.id}" style="color:#0F3D6E;font-weight:600">ดูรายละเอียด →</a>
                     </div>
                 `);
@@ -232,6 +265,7 @@ window.addEventListener('error', function(e) {
     // Filter chips
     const chipCls = {
         all: 'bg-white/95 text-slate-700',
+        active: 'bg-white/95 text-brand-700',
         pending: 'bg-white/95 text-red-700',
         in_progress: 'bg-white/95 text-amber-700',
         completed: 'bg-white/95 text-emerald-700',
@@ -261,7 +295,7 @@ window.addEventListener('error', function(e) {
     };
 
     const focusId = new URLSearchParams(location.search).get('focus');
-    loadPoints('all').then(() => {
+    loadPoints('active').then(() => {
         if (focusId) {
             focusHandled = true;
             setTimeout(() => window.centerOnNeed(parseInt(focusId, 10)), 300);

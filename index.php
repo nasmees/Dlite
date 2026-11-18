@@ -52,10 +52,23 @@ $router->get('/api/needs-summary', [NeedController::class, 'summary']);
 $router->get('/api/report-status', [NeedController::class, 'reportStatus']);
 $router->get('/api/need-detail', [NeedController::class, 'detailJson']);
 
+// Volunteer workspace (mobile-first)
+$router->get('/volunteer', [VolunteerController::class, 'index']);
+$router->get('/volunteer/new', [VolunteerController::class, 'newForm']);
+$router->post('/volunteer/new', [VolunteerController::class, 'store']);
+$router->get('/volunteer/cases/{id}', [VolunteerController::class, 'show']);
+$router->post('/volunteer/cases/{id}/claim', [VolunteerController::class, 'claim']);
+$router->post('/volunteer/cases/{id}/status', [VolunteerController::class, 'setStatus']);
+$router->post('/volunteer/cases/{id}/release', [VolunteerController::class, 'release']);
+$router->post('/volunteer/cases/{id}/transfer', [VolunteerController::class, 'transfer']);
+$router->post('/volunteer/availability', [VolunteerController::class, 'availability']);
+
 // Auth
 $router->get('/login', [AuthController::class, 'loginForm']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->get('/logout', [AuthController::class, 'logout']);
+$router->get('/password', [AuthController::class, 'passwordForm']);
+$router->post('/password', [AuthController::class, 'changePassword']);
 
 // Announcements (broadcast popup)
 $router->get('/announcements/latest', [AdminController::class, 'latestAnnouncement']);
@@ -87,5 +100,9 @@ $router->post('/admin/requests/{id}/delete', [AdminController::class, 'deleteReq
 $router->get('/admin/areas', [AdminController::class, 'areas']);
 $router->post('/admin/areas', [AdminController::class, 'saveArea']);
 $router->post('/admin/areas/{id}/delete', [AdminController::class, 'deleteArea']);
+$router->get('/admin/pois', [AdminController::class, 'pois']);
+$router->post('/admin/pois', [AdminController::class, 'savePoi']);
+$router->post('/admin/pois/{id}/delete', [AdminController::class, 'deletePoi']);
+$router->get('/api/pois', [MapController::class, 'pois']);
 
 $router->dispatch();

@@ -295,6 +295,10 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span class="sidebar-link-label">จัดการพื้นที่</span>
                 </a>
+                <a href="<?= Helper::url('admin/pois') ?>" title="จุดสำคัญ" class="sidebar-link <?= str_starts_with($reqPath, '/admin/pois') ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    <span class="sidebar-link-label">จุดสำคัญ</span>
+                </a>
                 <?php endif; ?>
             </div>
         </nav>
@@ -313,6 +317,10 @@
             <a href="<?= Helper::url() ?>" title="เปิดเว็บประชาชน" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition rounded-lg text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 <span class="sidebar-footer-label">เปิดเว็บประชาชน</span>
+            </a>
+            <a href="<?= Helper::url('password') ?>" title="เปลี่ยนรหัสผ่าน" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 <?= $reqPath === '/password' ? 'text-brand-700 bg-brand-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' ?> transition rounded-lg text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                <span class="sidebar-footer-label">เปลี่ยนรหัสผ่าน</span>
             </a>
             <a href="<?= Helper::url('logout') ?>" title="ออกจากระบบ" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition rounded-lg text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>

@@ -44,6 +44,27 @@ class Helper
     }
 
     /**
+     * Important-place (POI) categories: label + emoji + marker color
+     */
+    public static function poiCategories(): array
+    {
+        return [
+            'shelter'     => ['label' => 'จุดพักพิง',     'emoji' => '⛺', 'color' => '#059669'],
+            'evacuation'  => ['label' => 'จุดอพยพ',       'emoji' => '🚩', 'color' => '#EA580C'],
+            'supply'      => ['label' => 'จุดแจกจ่าย',    'emoji' => '📦', 'color' => '#D97706'],
+            'medical'     => ['label' => 'จุดพยาบาล',     'emoji' => '🏥', 'color' => '#E11D48'],
+            'meeting'     => ['label' => 'จุดนัดพบ',      'emoji' => '🤝', 'color' => '#2563EB'],
+            'other'       => ['label' => 'จุดสำคัญอื่นๆ', 'emoji' => '📌', 'color' => '#64748B'],
+        ];
+    }
+
+    public static function poiCategory(string $key): array
+    {
+        $cats = self::poiCategories();
+        return $cats[$key] ?? $cats['other'];
+    }
+
+    /**
      * SVG inner content (path elements) for each scenario — stroke icons
      */
     public static function scenarioIcons(): array

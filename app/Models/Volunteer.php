@@ -97,6 +97,39 @@ class Volunteer
         ]);
     }
 
+    /**
+     * Current user's volunteer profile row (availability etc.) — null fields defaulted
+     */
+    public static function myProfile(int $userId): array
+    {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT availability, organization_id, area_id, skills_json, equipment_json
+            FROM volunteer_profiles WHERE user_id = ?
+        ");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        $row['availability'] = $row['availability'] ?? 'available';
+        $row['skills'] = json_decode($row['skills_json'] ?? '[]', true) ?: [];
+        $row['equipment'] = json_decode($row['equipment_json'] ?? '[]', true) ?: [];
+        return $row;
+    }
+
+    /**
+     * Active volunteers — used for the "transfer case" picker
+     */
+    public static function options(): array
+    {
+        $db = Database::getInstance();
+        return $db->query("
+            SELECT u.id, u.name
+            FROM users u
+            LEFT JOIN volunteer_profiles vp ON vp.user_id = u.id
+            WHERE u.role = 'volunteer' AND u.is_active = 1
+            ORDER BY u.name COLLATE NOCASE
+        ")->fetchAll();
+    }
+
     public static function setAvailability(int $userId, string $availability): bool
     {
         $db = Database::getInstance();

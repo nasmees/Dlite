@@ -11,7 +11,8 @@ class AuthController
     public function loginForm(): void
     {
         if (Auth::check()) {
-            View::redirect('/admin');
+            $u = Auth::user();
+            View::redirect($u['role'] === 'admin' ? '/admin' : ($u['role'] === 'volunteer' ? '/volunteer' : '/'));
         }
         View::render('auth/login', [
             'title' => 'เข้าสู่ระบบ',
@@ -56,12 +57,64 @@ class AuthController
         // Success — clear throttle
         Cache::delete($throttleKey);
         Auth::login($user);
-        View::json(['ok' => true, 'message' => 'เข้าสู่ระบบสำเร็จ', 'redirect' => Helper::url('admin')]);
+        $redirect = match ($user['role']) {
+            'admin' => 'admin',
+            'volunteer' => 'volunteer',
+            default => '',
+        };
+        View::json(['ok' => true, 'message' => 'เข้าสู่ระบบสำเร็จ', 'redirect' => Helper::url($redirect)]);
     }
 
     public function logout(): void
     {
         Auth::logout();
         View::redirect('/');
+    }
+
+    public function passwordForm(): void
+    {
+        if (!Auth::check()) {
+            View::redirect('/login');
+            return;
+        }
+        $u = Auth::user();
+        $layout = match ($u['role'] ?? '') {
+            'admin' => 'layouts/admin',
+            'volunteer' => 'layouts/volunteer',
+            default => 'layouts/main',
+        };
+        View::render('auth/password', [
+            'title' => 'เปลี่ยนรหัสผ่าน',
+            'csrf' => Auth::csrfToken(),
+            'user' => $u,
+        ], $layout);
+    }
+
+    public function changePassword(): void
+    {
+        if (!Auth::check()) {
+            View::json(['ok' => false, 'message' => 'กรุณาเข้าสู่ระบบก่อน'], 401);
+        }
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง กรุณารีเฟรชหน้า'], 403);
+        }
+
+        $current = (string)($_POST['current_password'] ?? '');
+        $new = (string)($_POST['new_password'] ?? '');
+        $confirm = (string)($_POST['confirm_password'] ?? '');
+
+        $user = User::find((int)Auth::user()['id']);
+        if (!$user || !password_verify($current, $user['password_hash'])) {
+            View::json(['ok' => false, 'message' => 'รหัสผ่านปัจจุบันไม่ถูกต้อง'], 422);
+        }
+        if (strlen($new) < 6) {
+            View::json(['ok' => false, 'message' => 'รหัสผ่านใหม่ต้องยาวอย่างน้อย 6 ตัวอักษร'], 422);
+        }
+        if ($new !== $confirm) {
+            View::json(['ok' => false, 'message' => 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'], 422);
+        }
+
+        User::update((int)$user['id'], ['password' => $new]);
+        View::json(['ok' => true, 'message' => 'เปลี่ยนรหัสผ่านสำเร็จ']);
     }
 }

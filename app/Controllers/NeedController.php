@@ -9,7 +9,10 @@ class NeedController
 
     public function index(): void
     {
-        $status = $_GET['status'] ?? '';
+        // Default: only active cases — completed/cancelled require explicit filter
+        $status = $_GET['status'] ?? 'active';
+        $validStatuses = array_merge(['active', 'all'], array_keys(Helper::statusLabels()));
+        if (!in_array($status, $validStatuses, true)) $status = 'active';
         $q = trim($_GET['q'] ?? '');
         $urgency = $_GET['urgency'] ?? '';
         $scenario = $_GET['scenario'] ?? '';
@@ -22,7 +25,11 @@ class NeedController
         if (!in_array($scenario, $scenarioKeys, true)) $scenario = '';
 
         $filters = ['sort' => $sort];
-        if ($status) $filters['status'] = $status;
+        if ($status === 'active') {
+            $filters['statuses'] = ['pending', 'accepted', 'in_progress'];
+        } elseif ($status !== 'all') {
+            $filters['status'] = $status;
+        }
         if ($q) $filters['q'] = $q;
         if ($urgency) $filters['urgency'] = $urgency;
         if ($scenario) $filters['scenario'] = $scenario;

@@ -16,19 +16,17 @@ $tabUrl = function (?string $status) use ($tabParams) {
     if ($status !== null && $status !== '') $p['status'] = $status;
     return Helper::url('needs') . ($p ? '?' . http_build_query($p) : '');
 };
-$tabs = ['' => 'ทั้งหมด'] + $statusLabels;
+$tabs = ['active' => 'กำลังดำเนินการ'] + $statusLabels + ['all' => 'ทั้งหมด'];
 ?>
 <div class="space-y-4">
     <!-- Header -->
     <div class="flex items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-bold text-slate-900">รายการความต้องการ</h1>
-            <p class="text-sm text-slate-500">เหตุการณ์ที่แจ้งเข้ามาทั้งหมด</p>
+            <p class="text-sm text-slate-500">เหตุการณ์ที่กำลังดำเนินการอยู่</p>
         </div>
         <div class="flex items-center gap-3 shrink-0">
-            <?php if (Auth::check()): ?>
-                <a href="<?= Helper::url('map') ?>" class="text-sm text-brand-600 font-medium">แผนที่</a>
-            <?php endif; ?>
+            <a href="<?= Helper::url('map') ?>" class="text-sm text-brand-600 font-medium">แผนที่</a>
             <a href="<?= Helper::url() ?>" class="text-sm font-semibold text-white bg-red-600 hover:bg-red-700 px-3.5 py-2 rounded-xl">+ แจ้งใหม่</a>
         </div>
     </div>
@@ -38,8 +36,13 @@ $tabs = ['' => 'ทั้งหมด'] + $statusLabels;
         <!-- Status tabs with counts -->
         <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             <?php foreach ($tabs as $key => $label): ?>
-                <?php $active = $currentStatus === $key; $cnt = (int)($counts[$key === '' ? 'all' : $key] ?? 0); ?>
-                <a href="<?= Helper::e($tabUrl($key === '' ? null : $key)) ?>"
+                <?php
+                $active = $currentStatus === $key;
+                $cnt = $key === 'active'
+                    ? (int)($counts['pending'] + $counts['accepted'] + $counts['in_progress'])
+                    : (int)($counts[$key] ?? 0);
+                ?>
+                <a href="<?= Helper::e($tabUrl($key)) ?>"
                    class="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition <?= $active ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' ?>">
                     <?= Helper::e($label) ?>
                     <span class="text-xs <?= $active ? 'text-white/80' : 'text-slate-400' ?>"><?= $cnt ?></span>
@@ -52,24 +55,43 @@ $tabs = ['' => 'ทั้งหมด'] + $statusLabels;
                 <input type="hidden" name="status" value="<?= Helper::e($currentStatus) ?>">
             <?php endif; ?>
             <input type="search" name="q" value="<?= Helper::e($filters['q'] ?? '') ?>" placeholder="ค้นหา..." class="flex-1 min-w-[140px] border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white">
-            <select name="urgency" class="border border-slate-300 rounded-xl px-2.5 py-2 text-sm bg-white" onchange="this.form.submit()">
-                <option value="">ทุกความเร่งด่วน</option>
-                <?php foreach ($urgencyLabels as $k => $v): ?>
-                    <option value="<?= $k ?>" <?= ($filters['urgency'] ?? '') === $k ? 'selected' : '' ?>><?= Helper::e($v) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <select name="scenario" class="border border-slate-300 rounded-xl px-2.5 py-2 text-sm bg-white" onchange="this.form.submit()">
-                <option value="">ทุกประเภทเหตุการณ์</option>
-                <?php foreach ($scenarioLabels as $k => $v): ?>
-                    <option value="<?= $k ?>" <?= ($filters['scenario'] ?? '') === $k ? 'selected' : '' ?>><?= Helper::e($v) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <select name="sort" class="border border-slate-300 rounded-xl px-2.5 py-2 text-sm bg-white" onchange="this.form.submit()">
-                <option value="latest" <?= ($filters['sort'] ?? 'latest') === 'latest' ? 'selected' : '' ?>>ล่าสุด</option>
-                <option value="urgent" <?= ($filters['sort'] ?? '') === 'urgent' ? 'selected' : '' ?>>เร่งด่วนสุด</option>
-            </select>
             <noscript><button type="submit" class="btn-primary px-4 py-2 text-sm">ค้นหา</button></noscript>
         </form>
+
+        <!-- Advanced filters (collapsed by default) -->
+        <details class="mt-2 group" <?= (!empty($filters['urgency']) || !empty($filters['scenario']) || ($filters['sort'] ?? 'latest') === 'urgent') ? 'open' : '' ?>>
+            <summary class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 cursor-pointer select-none list-none">
+                <svg class="w-4 h-4 transition group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                ตัวกรองเพิ่มเติม
+                <?php if (!empty($filters['urgency']) || !empty($filters['scenario']) || ($filters['sort'] ?? 'latest') === 'urgent'): ?>
+                    <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                <?php endif; ?>
+            </summary>
+            <form method="get" class="flex flex-wrap gap-2 mt-2">
+                <?php if ($currentStatus !== ''): ?>
+                    <input type="hidden" name="status" value="<?= Helper::e($currentStatus) ?>">
+                <?php endif; ?>
+                <?php if (!empty($filters['q'])): ?>
+                    <input type="hidden" name="q" value="<?= Helper::e($filters['q']) ?>">
+                <?php endif; ?>
+                <select name="urgency" class="border border-slate-300 rounded-xl px-2.5 py-2 text-sm bg-white flex-1 min-w-[130px]" onchange="this.form.submit()">
+                    <option value="">ทุกความเร่งด่วน</option>
+                    <?php foreach ($urgencyLabels as $k => $v): ?>
+                        <option value="<?= $k ?>" <?= ($filters['urgency'] ?? '') === $k ? 'selected' : '' ?>><?= Helper::e($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="scenario" class="border border-slate-300 rounded-xl px-2.5 py-2 text-sm bg-white flex-1 min-w-[130px]" onchange="this.form.submit()">
+                    <option value="">ทุกประเภทเหตุการณ์</option>
+                    <?php foreach ($scenarioLabels as $k => $v): ?>
+                        <option value="<?= $k ?>" <?= ($filters['scenario'] ?? '') === $k ? 'selected' : '' ?>><?= Helper::e($v) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="sort" class="border border-slate-300 rounded-xl px-2.5 py-2 text-sm bg-white" onchange="this.form.submit()">
+                    <option value="latest" <?= ($filters['sort'] ?? 'latest') === 'latest' ? 'selected' : '' ?>>ล่าสุด</option>
+                    <option value="urgent" <?= ($filters['sort'] ?? '') === 'urgent' ? 'selected' : '' ?>>เร่งด่วนสุด</option>
+                </select>
+            </form>
+        </details>
     </section>
 
     <!-- List -->
@@ -77,7 +99,7 @@ $tabs = ['' => 'ทั้งหมด'] + $statusLabels;
         <div class="space-y-1" id="needList">
             <?php if (empty($needs)): ?>
                 <div class="p-8 text-center">
-                    <p class="text-slate-500 text-sm">ยังไม่มีรายการ<?php if ($currentStatus !== '' || !empty($filters['q']) || !empty($filters['urgency']) || !empty($filters['scenario'])): ?>ที่ตรงกับเงื่อนไข<?php endif; ?></p>
+                    <p class="text-slate-500 text-sm">ยังไม่มีรายการ<?php if (($currentStatus !== '' && $currentStatus !== 'active') || !empty($filters['q']) || !empty($filters['urgency']) || !empty($filters['scenario'])): ?>ที่ตรงกับเงื่อนไข<?php endif; ?></p>
                     <a href="<?= Helper::url() ?>" class="btn-primary inline-block mt-4 text-sm px-4 py-2">แจ้งความต้องการ</a>
                 </div>
             <?php else: ?>

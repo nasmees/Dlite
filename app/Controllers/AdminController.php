@@ -881,4 +881,65 @@ class AdminController
         $ok = Area::delete((int)$id);
         View::json(['ok' => $ok, 'message' => $ok ? 'ลบแล้ว' : 'ไม่สำเร็จ']);
     }
+
+    /**
+     * Important places (POIs) management — admin only
+     */
+    public function pois(): void
+    {
+        Auth::requireAdmin();
+
+        View::render('admin/pois', [
+            'title' => 'จุดสำคัญบนแผนที่',
+            'pois' => Poi::all(),
+            'poiCategories' => Helper::poiCategories(),
+            'csrf' => Auth::csrfToken(),
+            'user' => Auth::user(),
+            'isAdmin' => Auth::isAdmin(),
+            'includeMapAssets' => true,
+        ], 'layouts/admin');
+    }
+
+    public function savePoi(): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+
+        $title = trim($_POST['title'] ?? '');
+        $lat = $_POST['lat'] ?? '';
+        $lng = $_POST['lng'] ?? '';
+        if ($title === '' || $lat === '' || $lng === '' || !is_numeric($lat) || !is_numeric($lng)) {
+            View::json(['ok' => false, 'message' => 'กรุณาระบุชื่อจุดและปักหมุดบนแผนที่'], 422);
+        }
+
+        $data = [
+            'title' => $title,
+            'category' => $_POST['category'] ?? 'other',
+            'description' => trim($_POST['description'] ?? ''),
+            'lat' => (float)$lat,
+            'lng' => (float)$lng,
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+        ];
+
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $ok = Poi::update($id, $data);
+        } else {
+            Poi::create($data, Auth::user()['id'] ?? null);
+            $ok = true;
+        }
+        View::json(['ok' => $ok, 'message' => $ok ? 'บันทึกแล้ว' : 'ไม่สำเร็จ']);
+    }
+
+    public function deletePoi(string $id): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+        $ok = Poi::delete((int)$id);
+        View::json(['ok' => $ok, 'message' => $ok ? 'ลบแล้ว' : 'ไม่สำเร็จ']);
+    }
 }

@@ -138,7 +138,12 @@ $scenarioTitle = !empty($need['scenario']) && isset($scenarioLabels[$need['scena
 
         <?php if ($need['lat'] && $need['lng']): ?>
             <div id="detailMap" class="h-64 rounded-xl overflow-hidden border border-slate-200"></div>
-            <p class="text-base text-slate-500">พิกัด: <?= number_format($need['lat'], 5) ?>, <?= number_format($need['lng'], 5) ?></p>
+            <div class="flex items-center gap-3 mt-2">
+                <p class="text-base text-slate-500">พิกัด: <?= number_format($need['lat'], 5) ?>, <?= number_format($need['lng'], 5) ?></p>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=<?= (float)$need['lat'] ?>,<?= (float)$need['lng'] ?>" target="_blank" rel="noopener" class="ml-auto inline-flex items-center gap-1.5 text-base font-bold text-orange-600">
+                    🧭 นำทาง
+                </a>
+            </div>
         <?php endif; ?>
     </div>
 

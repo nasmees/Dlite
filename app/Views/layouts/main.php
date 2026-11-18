@@ -162,6 +162,33 @@
             }
         };
 
+        // Staff action helper — POST fields as fetch, toast + reload (used by volunteer workspace)
+        window.staffAction = async function(url, fields, opts = {}) {
+            const form = new FormData();
+            form.append('csrf_token', window.csrfToken);
+            Object.entries(fields || {}).forEach(([k, v]) => { if (v !== undefined && v !== null) form.append(k, v); });
+            try {
+                const res = await fetch(window.BASE_PATH + url, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: form
+                });
+                const json = await res.json();
+                if (json.ok) {
+                    window.Toast.show(json.message || 'สำเร็จ', 'ok');
+                    if (opts.reload !== false) setTimeout(() => location.reload(), 700);
+                } else {
+                    window.Toast.show(json.message || 'ไม่สำเร็จ', 'err');
+                    if (opts.reenable) opts.reenable();
+                }
+                return json;
+            } catch (e) {
+                window.Toast.show('เกิดข้อผิดพลาดเครือข่าย', 'err');
+                if (opts.reenable) opts.reenable();
+                return { ok: false };
+            }
+        };
+
         // Submit overlay helpers (loading / success)
         window.SubmitOverlay = {
             show(phase) {
@@ -270,8 +297,8 @@
     <div class="bg-slate-900 text-slate-200 text-sm">
         <div class="max-w-3xl mx-auto px-4 h-10 flex items-center justify-between gap-3">
             <span class="truncate"><?= Helper::e($staff['name'] ?? '') ?></span>
-            <a href="<?= Helper::url('admin') ?>" class="inline-flex items-center gap-1.5 font-medium text-white shrink-0">
-                ระบบจัดการ
+            <a href="<?= Helper::url(($staff['role'] ?? '') === 'admin' ? 'admin' : 'volunteer') ?>" class="inline-flex items-center gap-1.5 font-medium text-white shrink-0">
+                <?= ($staff['role'] ?? '') === 'admin' ? 'ระบบจัดการ' : 'งานอาสา' ?>
                 <span id="pendingBadge" class="hidden bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 items-center justify-center"></span>
             </a>
         </div>
@@ -291,9 +318,9 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span>หน้าแรก</span>
             </a>
-            <a href="<?= Helper::url('needs') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'รายการ') || str_contains($title ?? '', 'รายละเอียด') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <span>รายการ</span>
+            <a href="<?= Helper::url('map') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'แผนที่') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>แผนที่</span>
             </a>
 
             <!-- Center CTA: report -->

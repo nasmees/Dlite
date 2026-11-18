@@ -139,6 +139,23 @@ class Need
         if (isset($filters['has_location']) && $filters['has_location']) {
             $where[] = 'n.lat IS NOT NULL AND n.lng IS NOT NULL';
         }
+        if (!empty($filters['assigned_to'])) {
+            $where[] = 'n.assigned_to = ?';
+            $params[] = (int)$filters['assigned_to'];
+        }
+        if (!empty($filters['unassigned'])) {
+            $where[] = 'n.assigned_to IS NULL';
+        }
+        if (!empty($filters['active'])) {
+            $where[] = "n.status IN ('pending','accepted','in_progress')";
+        }
+        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $statuses = array_values(array_intersect($filters['statuses'], ['pending','accepted','in_progress','completed','cancelled']));
+            if ($statuses) {
+                $where[] = 'n.status IN (' . implode(',', array_fill(0, count($statuses), '?')) . ')';
+                $params = array_merge($params, $statuses);
+            }
+        }
 
         $orderBy = "n.created_at DESC";
         if (($filters['sort'] ?? '') !== 'latest') {
@@ -238,6 +255,23 @@ class Need
             $q = '%' . $filters['q'] . '%';
             $params = array_merge($params, [$q, $q, $q, $q]);
         }
+        if (!empty($filters['assigned_to'])) {
+            $where[] = 'assigned_to = ?';
+            $params[] = (int)$filters['assigned_to'];
+        }
+        if (!empty($filters['unassigned'])) {
+            $where[] = 'assigned_to IS NULL';
+        }
+        if (!empty($filters['active'])) {
+            $where[] = "status IN ('pending','accepted','in_progress')";
+        }
+        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $statuses = array_values(array_intersect($filters['statuses'], ['pending','accepted','in_progress','completed','cancelled']));
+            if ($statuses) {
+                $where[] = 'status IN (' . implode(',', array_fill(0, count($statuses), '?')) . ')';
+                $params = array_merge($params, $statuses);
+            }
+        }
         $sql = "SELECT COUNT(*) FROM needs WHERE " . implode(' AND ', $where);
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
@@ -315,6 +349,81 @@ class Need
         return true;
     }
 
+    /**
+     * Volunteer claims an unassigned case — atomic guard against double-claiming.
+     * Allowed from pending/accepted; sets status to accepted.
+     */
+    public static function claimCase(int $id, int $userId, string $actorName): bool
+    {
+        $need = self::find($id);
+        if (!$need || $need['assigned_to'] !== null) return false;
+        if (!in_array($need['status'], ['pending', 'accepted'], true)) return false;
+
+        $db = Database::getInstance();
+        $db->prepare("UPDATE needs SET assigned_to = ?, status = 'accepted', updated_at = datetime('now','localtime') WHERE id = ?")
+           ->execute([$userId, $id]);
+        $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message) VALUES (?,?,?,?,?)")
+           ->execute([$id, $userId, $need['status'], 'accepted', 'อาสาสมัคร ' . $actorName . ' รับเคส']);
+        return true;
+    }
+
+    /**
+     * Volunteer returns their own case to the open pool.
+     * Only for cases still in progress workflow (not completed/cancelled).
+     */
+    public static function releaseCase(int $id, int $userId, string $actorName): bool
+    {
+        $need = self::find($id);
+        if (!$need || (int)($need['assigned_to'] ?? 0) !== $userId) return false;
+        if (in_array($need['status'], ['completed', 'cancelled'], true)) return false;
+
+        $db = Database::getInstance();
+        $db->prepare("UPDATE needs SET assigned_to = NULL, status = 'pending', updated_at = datetime('now','localtime') WHERE id = ?")
+           ->execute([$id]);
+        $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message) VALUES (?,?,?,?,?)")
+           ->execute([$id, $userId, $need['status'], 'pending', 'อาสาสมัคร ' . $actorName . ' คืนเคสเข้ากองรวม']);
+        return true;
+    }
+
+    /**
+     * Transfer a case the actor currently owns to another volunteer.
+     */
+    public static function transferCase(int $id, int $fromUserId, int $toUserId, string $actorName, string $toName): bool
+    {
+        if ($fromUserId === $toUserId) return false;
+        $need = self::find($id);
+        if (!$need || (int)($need['assigned_to'] ?? 0) !== $fromUserId) return false;
+
+        $db = Database::getInstance();
+        $db->prepare("UPDATE needs SET assigned_to = ?, updated_at = datetime('now','localtime') WHERE id = ?")
+           ->execute([$toUserId, $id]);
+        $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message) VALUES (?,?,?,?,?)")
+           ->execute([$id, $fromUserId, $need['status'], $need['status'], 'อาสาสมัคร ' . $actorName . ' โอนเคสให้ ' . $toName]);
+        return true;
+    }
+
+    /**
+     * Counts for the volunteer dashboard — scoped to one assignee.
+     */
+    public static function myStats(int $userId): array
+    {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("
+            SELECT
+                SUM(CASE WHEN status IN ('accepted','in_progress') THEN 1 ELSE 0 END) AS active,
+                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS working,
+                SUM(CASE WHEN status = 'completed' AND date(updated_at) = date('now','localtime') THEN 1 ELSE 0 END) AS done_today
+            FROM needs WHERE assigned_to = ?
+        ");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        return [
+            'active' => (int)($row['active'] ?? 0),
+            'working' => (int)($row['working'] ?? 0),
+            'done_today' => (int)($row['done_today'] ?? 0),
+        ];
+    }
+
     public static function flushCache(): void
     {
         Cache::flush();
@@ -335,6 +444,7 @@ class Need
                     'status' => $r['status'],
                     'urgency' => $r['urgency'],
                     'name' => $r['reporter_name'],
+                    'place' => trim(implode(' ', array_filter([$r['district'] ?? '', $r['province'] ?? '']))),
                     'types' => $r['need_types'],
                     'people' => $r['people_count'],
                 ];
