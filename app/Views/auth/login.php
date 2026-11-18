@@ -22,10 +22,16 @@
             </label>
             <input type="password" name="password" required class="input-field" placeholder="รหัสผ่าน" autocomplete="current-password">
         </div>
+        <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+            <input type="checkbox" name="remember" value="1" checked class="rounded border-slate-300 text-brand-600 w-4 h-4">
+            จดจำการเข้าสู่ระบบ 30 วัน
+        </label>
         <button type="submit" id="loginBtn" class="w-full min-h-[56px] rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-lg font-bold transition shadow-lg">เข้าสู่ระบบ</button>
         <p id="loginMsg" class="text-sm text-center hidden"></p>
     </form>
-    <p class="text-sm text-center text-slate-400 mt-4">ติดต่อผู้ดูแลระบบเพื่อขอบัญชี</p>
+    <p class="text-sm text-center text-slate-400 mt-4">
+        ยังไม่มีบัญชีอาสาสมัคร? <a href="<?= Helper::url('register') ?>" class="text-emerald-600 font-medium hover:underline">สมัครอาสาสมัคร</a>
+    </p>
 </div>
 <script>
 document.getElementById('loginForm').addEventListener('submit', async (e) => {

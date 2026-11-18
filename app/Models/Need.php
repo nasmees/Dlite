@@ -424,6 +424,45 @@ class Need
         ];
     }
 
+    /**
+     * Aggregate stats for the admin dashboard charts
+     */
+    public static function reportStats(): array
+    {
+        $db = Database::getInstance();
+        $daily = array_reverse($db->query("
+            SELECT date(created_at) AS d, COUNT(*) AS c
+            FROM needs
+            GROUP BY d ORDER BY d DESC LIMIT 14
+        ")->fetchAll());
+        $byStatus = $db->query("SELECT status, COUNT(*) AS c FROM needs GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $byScenario = $db->query("
+            SELECT COALESCE(NULLIF(scenario, ''), 'other') AS s, COUNT(*) AS c
+            FROM needs GROUP BY s ORDER BY c DESC
+        ")->fetchAll();
+        $byProvince = $db->query("
+            SELECT COALESCE(NULLIF(a.province, ''), 'ไม่ระบุ') AS p, COUNT(*) AS c
+            FROM needs n LEFT JOIN areas a ON a.id = n.area_id
+            GROUP BY p ORDER BY c DESC LIMIT 8
+        ")->fetchAll();
+        $byUrgency = $db->query("SELECT urgency, COUNT(*) AS c FROM needs GROUP BY urgency")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $totals = $db->query("SELECT COUNT(*) AS total, COALESCE(SUM(people_count),0) AS people FROM needs")->fetch();
+        $helpCount = (int)$db->query("SELECT COUNT(*) FROM helps")->fetchColumn();
+        $volunteerCount = (int)$db->query("SELECT COUNT(*) FROM users WHERE role = 'volunteer' AND is_active = 1")->fetchColumn();
+
+        return [
+            'daily' => $daily,
+            'byStatus' => $byStatus,
+            'byScenario' => $byScenario,
+            'byProvince' => $byProvince,
+            'byUrgency' => $byUrgency,
+            'total' => (int)($totals['total'] ?? 0),
+            'people' => (int)($totals['people'] ?? 0),
+            'helpCount' => $helpCount,
+            'volunteerCount' => $volunteerCount,
+        ];
+    }
+
     public static function flushCache(): void
     {
         Cache::flush();

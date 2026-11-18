@@ -16,7 +16,7 @@ class Auth
         }
     }
 
-    public static function login(array $user): void
+    public static function login(array $user, bool $remember = false): void
     {
         self::start();
         $_SESSION['user'] = [
@@ -25,11 +25,31 @@ class Auth
             'phone' => $user['phone'],
             'role' => $user['role'],
         ];
+        if ($remember) {
+            $token = bin2hex(random_bytes(32));
+            User::setRememberToken((int)$user['id'], hash('sha256', $token));
+            $expires = time() + REMEMBER_DAYS * 86400;
+            setcookie(REMEMBER_COOKIE, $user['id'] . ':' . $token, [
+                'expires' => $expires,
+                'path' => '/',
+                'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
     }
 
     public static function logout(): void
     {
         self::start();
+        $u = $_SESSION['user'] ?? null;
+        if ($u) {
+            User::setRememberToken((int)$u['id'], null);
+        }
+        if (!empty($_COOKIE[REMEMBER_COOKIE])) {
+            setcookie(REMEMBER_COOKIE, '', time() - 3600, '/');
+            unset($_COOKIE[REMEMBER_COOKIE]);
+        }
         unset($_SESSION['user']);
         session_destroy();
     }
@@ -37,7 +57,21 @@ class Auth
     public static function user(): ?array
     {
         self::start();
-        return $_SESSION['user'] ?? null;
+        if (isset($_SESSION['user'])) {
+            return $_SESSION['user'];
+        }
+        // Remember-me: restore session from long-lived cookie
+        $cookie = $_COOKIE[REMEMBER_COOKIE] ?? '';
+        if ($cookie !== '') {
+            $user = User::findByRememberCookie($cookie);
+            if ($user) {
+                self::login($user);
+                return $_SESSION['user'];
+            }
+            setcookie(REMEMBER_COOKIE, '', time() - 3600, '/');
+            unset($_COOKIE[REMEMBER_COOKIE]);
+        }
+        return null;
     }
 
     public static function check(): bool

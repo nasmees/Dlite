@@ -34,7 +34,7 @@ $canClose = in_array($status, ['accepted', 'in_progress'], true);
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                     <div><dt class="text-slate-500">ผู้แจ้ง</dt><dd class="font-medium text-slate-800 mt-0.5"><?= Helper::e($need['reporter_name']) ?></dd></div>
                     <?php if (!empty($need['scenario'])): ?>
-                    <div><dt class="text-slate-500">ประเภทเหตุการณ์</dt><dd class="font-medium text-slate-800 mt-0.5"><span class="inline-block text-xs px-2 py-0.5 rounded bg-brand-50 text-brand-700"><?= Helper::e(Helper::scenarioLabels()[$need['scenario']] ?? $need['scenario']) ?></span></dd></div>
+                    <div><dt class="text-slate-500">ประเภทเหตุการณ์</dt><dd class="font-medium text-slate-800 mt-0.5"><span class="inline-block text-xs px-2 py-0.5 rounded bg-brand-50 text-brand-700"><?= Helper::e(Helper::scenarioLabel($need['scenario'] ?? null)) ?></span></dd></div>
                     <?php endif; ?>
                     <div><dt class="text-slate-500">เบอร์โทร</dt><dd class="font-medium text-slate-800 mt-0.5"><?= Helper::e($need['reporter_phone'] ?: '—') ?></dd></div>
                     <div><dt class="text-slate-500">พื้นที่</dt><dd class="font-medium text-slate-800 mt-0.5"><?= Helper::e($need['area_name'] ?? '—') ?><?= $need['district'] ? ' · ' . Helper::e($need['district']) : '' ?></dd></div>
@@ -51,7 +51,7 @@ $canClose = in_array($status, ['accepted', 'in_progress'], true);
                         <div class="text-sm text-slate-500 mb-2">ความต้องการ</div>
                         <div class="flex flex-wrap gap-1.5">
                             <?php foreach ($need['need_types'] as $t): ?>
-                                <span class="text-sm bg-brand-50 text-brand-700 px-2.5 py-1 rounded-lg font-medium"><?= Helper::e($needTypes[$t] ?? $t) ?></span>
+                                <span class="text-sm bg-brand-50 text-brand-700 px-2.5 py-1 rounded-lg font-medium"><?= Helper::e(Helper::needTypeLabel($t)) ?></span>
                             <?php endforeach; ?>
                         </div>
                     </div>

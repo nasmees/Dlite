@@ -5,10 +5,7 @@
  * Expects: $query, $isPhone, $results, $need, $history, $statusLabels, $urgencyLabels,
  *          $scenarioLabels, $needTypes
  */
-$myScenario = '';
-if ($need && !empty($need['scenario']) && isset($scenarioLabels[$need['scenario']])) {
-    $myScenario = $scenarioLabels[$need['scenario']];
-}
+$myScenario = $need ? Helper::scenarioLabel($need['scenario'] ?? null) : '';
 ?>
 <div class="space-y-4 max-w-2xl mx-auto">
     <div class="text-center pt-1">
@@ -46,7 +43,7 @@ if ($need && !empty($need['scenario']) && isset($scenarioLabels[$need['scenario'
                     <li>
                         <a href="<?= Helper::url('track?code=' . urlencode($r['code'])) ?>" class="flex items-center justify-between gap-2 px-4 py-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
                             <div class="min-w-0">
-                                <p class="text-base font-semibold text-slate-800 truncate flex items-center gap-1.5"><?= Helper::scenarioIcon($r['scenario'] ?? null, 'w-5 h-5 shrink-0 ' . Helper::scenarioIconColor($r['scenario'] ?? 'other')) ?><?= Helper::e(!empty($scenarioLabels[$r['scenario']]) ? $scenarioLabels[$r['scenario']] : $r['code']) ?></p>
+                                <p class="text-base font-semibold text-slate-800 truncate flex items-center gap-1.5"><?= Helper::scenarioIcon($r['scenario'] ?? null, 'w-5 h-5 shrink-0 ' . Helper::scenarioIconColor($r['scenario'] ?? 'other')) ?><?= Helper::e(Helper::scenarioLabel($r['scenario'] ?? null) ?: $r['code']) ?></p>
                                 <p class="text-sm text-slate-500 mt-0.5"><?= Helper::e($r['code']) ?> · <?= Helper::timeAgo($r['created_at']) ?></p>
                             </div>
                             <span class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full font-semibold <?= Helper::statusColor($r['status']) ?> shrink-0"><?= Helper::statusDot($r['status']) ?><?= Helper::e($statusLabels[$r['status']] ?? $r['status']) ?></span>
@@ -91,7 +88,7 @@ if ($need && !empty($need['scenario']) && isset($scenarioLabels[$need['scenario'
             <?php if (!empty($need['need_types'])): ?>
                 <div class="flex flex-wrap gap-1.5">
                     <?php foreach ($need['need_types'] as $t): ?>
-                        <span class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 rounded-lg font-medium <?= Helper::needTypeChipColor($t) ?>"><?= Helper::needTypeIcon($t, 'w-5 h-5 shrink-0') ?><?= Helper::e($needTypes[$t] ?? $t) ?></span>
+                        <span class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 rounded-lg font-medium <?= Helper::needTypeChipColor($t) ?>"><?= Helper::needTypeIcon($t, 'w-5 h-5 shrink-0') ?><?= Helper::e(Helper::needTypeLabel($t)) ?></span>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -121,7 +118,7 @@ if ($need && !empty($need['scenario']) && isset($scenarioLabels[$need['scenario'
         <div class="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4">
             <button type="button" id="closeCaseToggle" class="w-full flex items-center justify-center gap-2 text-emerald-800 font-bold text-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                ได้รับความช่วยเหลือแล้ว? ปิดเคสเอง
+                ได้รับความช่วยเหลือแล้ว?
             </button>
             <form id="closeCaseForm" class="hidden mt-4 space-y-2.5">
                 <input type="hidden" name="csrf_token" value="<?= Helper::e($csrf) ?>">
@@ -443,7 +440,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
             <div class="mt-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4">
                 <button type="button" id="modalCloseToggle" class="w-full flex items-center justify-center gap-2 text-emerald-800 font-bold text-base">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    ได้รับความช่วยเหลือแล้ว? ปิดเคสเอง
+                    ได้รับความช่วยเหลือแล้ว?
                 </button>
                 <form id="modalCloseForm" class="hidden mt-3.5 space-y-2.5">
                     <input type="hidden" name="csrf_token" value="${esc(csrfToken)}">

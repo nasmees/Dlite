@@ -5,28 +5,105 @@
 
 class Volunteer
 {
+    private const SKILLS_DISASTER = [
+        'first_aid' => 'ปฐมพยาบาล',
+        'rescue' => 'กู้ชีพ / กู้ภัย',
+        'boat_rescue' => 'กู้ภัยทางน้ำ',
+        'medical' => 'บุคลากรทางการแพทย์',
+        'logistics' => 'ขนส่ง / ลำเลียง',
+        'communications' => 'สื่อสาร',
+        'counseling' => 'ให้คำปรึกษา / จิตวิทยา',
+        'driver' => 'ขับรถ / ขนส่งหนัก',
+        'construction' => 'ช่าง / ซ่อมแซม',
+        'electrical' => 'ช่างไฟฟ้า',
+        'cleaning' => 'ทำความสะอาด / ฟื้นฟู',
+        'food_service' => 'ครัว / อาหาร',
+        'education' => 'การศึกษา / สอนพิเศษ',
+        'accounting' => 'บัญชี / การเงิน',
+        'security' => 'รักษาความปลอดภัย',
+        'it_support' => 'ไอที / ระบบสารสนเทศ',
+        'translation' => 'แปลภาษา / ล่าม',
+    ];
+
+    private const SKILLS_RELIEF = [
+        'first_aid' => 'ปฐมพยาบาล',
+        'medical' => 'บุคลากรทางการแพทย์',
+        'counseling' => 'ให้คำปรึกษา / จิตวิทยา',
+        'training' => 'ฝึกอาชีพ / อบรม',
+        'finance' => 'การเงิน / สวัสดิการ',
+        'legal' => 'ด้านกฎหมาย',
+        'logistics' => 'ขนส่ง / ลำเลียง',
+        'communications' => 'สื่อสาร',
+        'nursing' => 'พยาบาล / ผู้ดูแลผู้ป่วย',
+        'nutrition' => 'โภชนาการ / อาหาร',
+        'social_work' => 'สังคมสงเคราะห์',
+        'community' => 'ชุมชน / ผู้นำชุมชน',
+        'marketing' => 'ประชาสัมพันธ์ / สื่อ',
+        'it_support' => 'ไอที / ระบบสารสนเทศ',
+        'driver' => 'ขับรถ / ขนส่ง',
+        'cleaning' => 'ทำความสะอาด / ฟื้นฟู',
+        'education' => 'การศึกษา / อบรม',
+        'accounting' => 'บัญชี / การเงิน',
+        'translation' => 'แปลภาษา / ล่าม',
+    ];
+
+    private const EQUIPMENT_DISASTER = [
+        'boat' => 'เรือ',
+        'life_jacket' => 'เสื้อชูชีพ',
+        'first_aid_kit' => 'ชุดปฐมพยาบาล',
+        'vehicle' => 'รถ',
+        'radio' => 'วิทยุสื่อสาร',
+        'water_pump' => 'เครื่องสูบน้ำ',
+        'generator' => 'เครื่องปั่นไฟ',
+        'shelter_kit' => 'เต็นท์ / ชุดพักพิง',
+        'food_supplies' => 'เสบียง / อาหารแห้ง',
+        'water_filter' => 'เครื่องกรองน้ำ',
+        'flashlight' => 'ไฟฉาย / ไฟหน้า',
+        'uniform' => 'เครื่องแบบ / รองเท้า',
+        'camera' => 'กล้อง / โดรน',
+        'wheelchair' => 'รถเข็น / อุปกรณ์ช่วยเหลือ',
+    ];
+
+    private const EQUIPMENT_RELIEF = [
+        'first_aid_kit' => 'ชุดปฐมพยาบาล',
+        'medical_supplies' => 'เวชภัณฑ์',
+        'vehicle' => 'รถ',
+        'radio' => 'วิทยุสื่อสาร',
+        'megaphone' => 'เครื่องขยายเสียง',
+        'laptop' => 'คอมพิวเตอร์ / แท็บเล็ต',
+        'documents' => 'เอกสาร / แบบฟอร์ม',
+        'wifi_hotspot' => 'จุดต่อไวไฟ',
+        'printer' => 'เครื่องพิมพ์',
+        'projector' => 'โปรเจกเตอร์ / จอภาพ',
+        'camera' => 'กล้อง',
+        'sound_system' => 'ลำโพง / เครื่องเสียง',
+        'survey_kit' => 'แบบประเมิน / อุปกรณ์สำรวจ',
+        'wheelchair' => 'รถเข็น / อุปกรณ์ช่วยเหลือ',
+        'generator' => 'เครื่องปั่นไฟ',
+    ];
+
     public static function skillOptions(): array
     {
-        return [
-            'first_aid' => 'ปฐมพยาบาล',
-            'rescue' => 'กู้ชีพ / กู้ภัย',
-            'boat_rescue' => 'กู้ภัยทางน้ำ',
-            'medical' => 'บุคลากรทางการแพทย์',
-            'logistics' => 'ขนส่ง / ลำเลียง',
-            'communications' => 'สื่อสาร',
-        ];
+        return Helper::appMode() === 'relief' ? self::SKILLS_RELIEF : self::SKILLS_DISASTER;
+    }
+
+    public static function skillLabel(string $key): string
+    {
+        $opts = self::skillOptions();
+        if (isset($opts[$key])) return $opts[$key];
+        return self::SKILLS_DISASTER[$key] ?? $key;
     }
 
     public static function equipmentOptions(): array
     {
-        return [
-            'boat' => 'เรือ',
-            'life_jacket' => 'เสื้อชูชีพ',
-            'first_aid_kit' => 'ชุดปฐมพยาบาล',
-            'vehicle' => 'รถ',
-            'radio' => 'วิทยุสื่อสาร',
-            'water_pump' => 'เครื่องสูบน้ำ',
-        ];
+        return Helper::appMode() === 'relief' ? self::EQUIPMENT_RELIEF : self::EQUIPMENT_DISASTER;
+    }
+
+    public static function equipmentLabel(string $key): string
+    {
+        $opts = self::equipmentOptions();
+        if (isset($opts[$key])) return $opts[$key];
+        return self::EQUIPMENT_DISASTER[$key] ?? $key;
     }
 
     public static function all(array $filters = []): array

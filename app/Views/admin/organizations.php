@@ -90,6 +90,8 @@
                             data-organization="<?= Helper::e(json_encode($orgData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)) ?>">
                             แก้ไข
                         </button>
+                        <button type="button" class="delete-organization rounded-md px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                            data-id="<?= (int)$organization['id'] ?>" data-name="<?= Helper::e($organization['name']) ?>">ลบ</button>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -278,6 +280,28 @@
         } catch (error) {
             window.Toast.show(error.message || 'เปลี่ยนสถานะองค์กรไม่สำเร็จ', 'err');
         }
+    });
+
+    document.querySelectorAll('.delete-organization').forEach(button => {
+        button.addEventListener('click', async () => {
+            if (!window.confirm('ลบองค์กร "' + button.dataset.name + '" ถาวร? อาสาในองค์กรจะกลายเป็นไม่สังกัดองค์กร')) return;
+            const body = new FormData();
+            body.append('csrf_token', csrf);
+            button.disabled = true;
+            try {
+                const response = await fetch(window.BASE_PATH + '/admin/organizations/' + button.dataset.id + '/delete', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.message || 'ลบองค์กรไม่สำเร็จ');
+                window.location.reload();
+            } catch (error) {
+                button.disabled = false;
+                window.Toast.show(error.message || 'ลบองค์กรไม่สำเร็จ', 'err');
+            }
+        });
     });
 })();
 </script>

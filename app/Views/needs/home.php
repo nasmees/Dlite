@@ -8,11 +8,16 @@
 <div class="space-y-4 -mt-2">
     <!-- Hero -->
     <div class="pt-1 flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shrink-0 shadow-sm">
-            <i class="fa-solid fa-water text-white text-2xl"></i>
-        </div>
+        <?php $heroLogo = Helper::brandLogoUrl(); ?>
+        <?php if ($heroLogo): ?>
+            <img src="<?= Helper::e($heroLogo) ?>" alt="" class="w-12 h-12 rounded-2xl object-contain bg-white border border-slate-200 shadow-sm shrink-0">
+        <?php else: ?>
+            <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shrink-0 shadow-sm">
+                <i class="fa-solid fa-water text-white text-2xl"></i>
+            </div>
+        <?php endif; ?>
         <div>
-            <h1 class="text-xl font-bold text-brand-800 leading-tight">ศูนย์ประสานงานช่วยเหลือน้ำท่วม</h1>
+            <h1 class="text-xl font-bold text-brand-800 leading-tight"><?= Helper::e(Helper::appName()) ?></h1>
             <p class="text-slate-500 mt-0.5">
                 <?php if (($counts['pending'] ?? 0) > 0): ?>
                     มี <span class="font-semibold text-red-600"><?= (int)$counts['pending'] ?></span> เรื่องรอความช่วยเหลือ
@@ -104,7 +109,7 @@
                     $meta = array_merge(
                         $loc ? [$loc] : [],
                         ((int)($n['people_count'] ?? 0) > 0) ? ['~' . number_format((int)$n['people_count']) . ' คน'] : [],
-                        array_map(fn($t) => $needTypes[$t] ?? $t, array_slice($n['need_types'] ?? [], 0, 3))
+                        array_map(fn($t) => Helper::needTypeLabel($t), array_slice($n['need_types'] ?? [], 0, 3))
                     );
                     ?>
                     <a href="<?= Helper::url('needs/' . $n['id']) ?>" class="card px-4 py-3 flex items-center gap-3 hover:border-red-300 hover:shadow-md transition active:bg-slate-50">
@@ -113,7 +118,7 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
-                                <p class="text-sm font-semibold text-slate-800 truncate"><?= !empty($n['scenario']) && isset($scenarioLabels[$n['scenario']]) ? Helper::e($scenarioLabels[$n['scenario']]) : 'เหตุการณ์' ?> <span class="font-normal text-slate-400">· <?= Helper::timeAgo($n['created_at']) ?></span></p>
+                                <p class="text-sm font-semibold text-slate-800 truncate"><?= Helper::e(Helper::scenarioLabel($n['scenario'] ?? null) ?: 'เหตุการณ์') ?> <span class="font-normal text-slate-400">· <?= Helper::timeAgo($n['created_at']) ?></span></p>
                                 <span class="text-xs px-2 py-0.5 rounded-full font-semibold <?= Helper::urgencyColor($n['urgency']) ?> shrink-0"><?= Helper::e($urgencyLabels[$n['urgency']] ?? $n['urgency']) ?></span>
                             </div>
                             <p class="text-sm font-medium text-slate-700 truncate mt-0.5"><?= Helper::e(implode(' · ', $meta)) ?></p>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0F3D6E">
-    <title><?= Helper::e($title ?? 'อาสาสมัคร') ?> | Deep South Care</title>
+    <title><?= Helper::e($title ?? 'อาสาสมัคร') ?> | <?= Helper::e(Helper::appName()) ?></title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -125,12 +125,17 @@
     <header class="bg-white border-b border-slate-200 sticky top-0 z-[1001]">
         <div class="max-w-lg mx-auto px-4 h-14 flex items-center justify-between gap-3">
             <a href="<?= Helper::url('volunteer') ?>" class="flex items-center gap-2.5 min-w-0">
-                <div class="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-water text-lg"></i>
-                </div>
+                <?php $vLogo = Helper::brandLogoUrl(); ?>
+                <?php if ($vLogo): ?>
+                    <img src="<?= Helper::e($vLogo) ?>" alt="" class="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200 shrink-0">
+                <?php else: ?>
+                    <div class="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-water text-lg"></i>
+                    </div>
+                <?php endif; ?>
                 <div class="min-w-0">
                     <p class="font-semibold text-slate-800 leading-tight truncate">จิตอาสา</p>
-                    <p class="text-xs text-slate-500 truncate">Deep South Care</p>
+                    <p class="text-xs text-slate-500 truncate"><?= Helper::e(Helper::appName()) ?></p>
                 </div>
             </a>
             <div class="flex items-center gap-3 text-sm shrink-0 relative">
@@ -170,7 +175,11 @@
             </div>
 
             <a href="<?= Helper::url() ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 text-slate-500">
-                <i class="fa-solid fa-water text-xl"></i>
+                <?php if ($vLogo): ?>
+                    <img src="<?= Helper::e($vLogo) ?>" alt="" class="w-6 h-6 object-contain rounded">
+                <?php else: ?>
+                    <i class="fa-solid fa-water text-xl"></i>
+                <?php endif; ?>
                 <span>เว็บหลัก</span>
             </a>
         </div>

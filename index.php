@@ -66,6 +66,8 @@ $router->post('/volunteer/availability', [VolunteerController::class, 'availabil
 // Auth
 $router->get('/login', [AuthController::class, 'loginForm']);
 $router->post('/login', [AuthController::class, 'login']);
+$router->get('/register', [AuthController::class, 'registerForm']);
+$router->post('/register', [AuthController::class, 'register']);
 $router->get('/logout', [AuthController::class, 'logout']);
 $router->get('/password', [AuthController::class, 'passwordForm']);
 $router->post('/password', [AuthController::class, 'changePassword']);
@@ -84,9 +86,11 @@ $router->get('/admin/volunteers', [AdminController::class, 'volunteers']);
 $router->post('/admin/volunteers', [AdminController::class, 'saveVolunteer']);
 $router->post('/admin/volunteers/{id}/availability', [AdminController::class, 'updateVolunteerAvailability']);
 $router->post('/admin/volunteers/{id}/toggle', [AdminController::class, 'toggleVolunteerAccount']);
+$router->post('/admin/volunteers/{id}/delete', [AdminController::class, 'deleteVolunteer']);
 $router->get('/admin/organizations', [AdminController::class, 'organizations']);
 $router->post('/admin/organizations', [AdminController::class, 'saveOrganization']);
 $router->post('/admin/organizations/{id}/toggle', [AdminController::class, 'toggleOrganization']);
+$router->post('/admin/organizations/{id}/delete', [AdminController::class, 'deleteOrganization']);
 $router->get('/admin/requests', [AdminController::class, 'requests']);
 $router->get('/admin/requests/create', [AdminController::class, 'createRequestForm']);
 $router->post('/admin/requests/create', [AdminController::class, 'createRequest']);
@@ -103,6 +107,12 @@ $router->post('/admin/areas/{id}/delete', [AdminController::class, 'deleteArea']
 $router->get('/admin/pois', [AdminController::class, 'pois']);
 $router->post('/admin/pois', [AdminController::class, 'savePoi']);
 $router->post('/admin/pois/{id}/delete', [AdminController::class, 'deletePoi']);
+$router->get('/admin/stats', [AdminController::class, 'stats']);
+$router->get('/admin/users', [AdminController::class, 'users']);
+$router->post('/admin/users', [AdminController::class, 'saveUser']);
+$router->post('/admin/users/{id}/toggle', [AdminController::class, 'toggleUser']);
+$router->get('/admin/settings', [AdminController::class, 'settings']);
+$router->post('/admin/settings', [AdminController::class, 'saveSettings']);
 $router->get('/api/pois', [MapController::class, 'pois']);
 
 $router->dispatch();

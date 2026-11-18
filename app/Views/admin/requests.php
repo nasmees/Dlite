@@ -114,7 +114,7 @@ $exportUrl = Helper::url('admin/requests/export' . ($exportParams ? '?' . http_b
                 <div class="flex flex-wrap gap-1.5 mb-3">
                     <?php foreach (array_slice($n['need_types'], 0, 3) as $t): ?>
                         <span class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-700">
-                            <?= Helper::needTypeIcon($t) ?> <?= Helper::e($needTypes[$t] ?? $t) ?>
+                            <?= Helper::needTypeIcon($t) ?> <?= Helper::e(Helper::needTypeLabel($t)) ?>
                         </span>
                     <?php endforeach; ?>
                     <?php if (count($n['need_types']) > 3): ?><span class="text-xs text-slate-400">+<?= count($n['need_types']) - 3 ?></span><?php endif; ?>

@@ -48,7 +48,7 @@
                                     </span>
                                     <?php if (!empty($case['scenario'])): ?>
                                         <span class="rounded-full px-2 py-0.5 text-xs font-medium bg-brand-50 text-brand-700">
-                                            <?= Helper::e(Helper::scenarioLabels()[$case['scenario']] ?? $case['scenario']) ?>
+                                            <?= Helper::e(Helper::scenarioLabel($case['scenario'] ?? null)) ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -65,7 +65,7 @@
                         <?php if (!empty($case['need_types'])): ?>
                             <div class="flex flex-wrap gap-1.5 mt-3">
                                 <?php foreach (array_slice($case['need_types'], 0, 3) as $type): ?>
-                                    <span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600"><?= Helper::e($needTypes[$type] ?? $type) ?></span>
+                                    <span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600"><?= Helper::e(Helper::needTypeLabel($type)) ?></span>
                                 <?php endforeach; ?>
                                 <?php if (count($case['need_types']) > 3): ?>
                                     <span class="px-1 py-1 text-xs text-slate-500">+<?= count($case['need_types']) - 3 ?></span>

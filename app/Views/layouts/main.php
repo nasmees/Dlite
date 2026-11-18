@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#0369a1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="description" content="Deep South Care Lite - ระบบประสานงานช่วยเหลือผู้ประสบภัยน้ำท่วมชายแดนใต้">
-    <title><?= Helper::e($title ?? 'Deep South Care Lite') ?> | Deep South Care Lite</title>
+    <meta name="description" content="<?= Helper::e(Helper::appName()) ?> - ระบบประสานงานช่วยเหลือผู้ประสบภัยน้ำท่วมชายแดนใต้">
+    <title><?= Helper::e($title ?? Helper::appName()) ?> | <?= Helper::e(Helper::appName()) ?></title>
     
     <!-- Kanit Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -315,7 +315,7 @@
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-[1002] safe-bottom">
         <div class="flex items-end justify-around h-[4.5rem] max-w-lg mx-auto px-1">
             <a href="<?= Helper::url() ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= ($title ?? '') === 'Deep South Care' ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
-                <i class="fa-solid fa-water text-xl"></i>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span>หน้าแรก</span>
             </a>
             <a href="<?= Helper::url('map') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'แผนที่') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
@@ -324,11 +324,12 @@
             </a>
 
             <!-- Center CTA: report -->
+            <?php $reliefMode = Helper::appMode() === 'relief'; ?>
             <div class="flex-1 flex flex-col items-center justify-end pb-1.5">
-                <button type="button" id="navReportBtn" class="report-cta w-14 h-14 -mt-9 rounded-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white flex items-center justify-center ring-4 ring-white">
-                    <i class="fas fa-person-drowning text-3xl"></i>
+                <button type="button" id="navReportBtn" class="report-cta w-14 h-14 -mt-9 rounded-full <?= $reliefMode ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800' : 'bg-red-600 hover:bg-red-700 active:bg-red-800' ?> text-white flex items-center justify-center ring-4 ring-white">
+                    <i class="fas <?= $reliefMode ? 'fa-male' : 'fa-person-drowning' ?> text-3xl"></i>
                 </button>
-                <span class="text-xs font-semibold text-red-600 mt-1">แจ้งเหตุ</span>
+                <span class="text-xs font-semibold <?= $reliefMode ? 'text-emerald-600' : 'text-red-600' ?> mt-1"><?= Helper::e(Helper::reportCta()) ?></span>
             </div>
 
             <a href="<?= Helper::url('track') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= ($title ?? '') === 'ติดตามสถานะ' ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
@@ -339,6 +340,11 @@
             <a href="<?= Helper::url('login') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'เข้าสู่ระบบ') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                 <span>เข้าสู่ระบบ</span>
+            </a>
+            <?php else: $me = Auth::user(); $meRole = $me['role'] ?? ''; ?>
+            <a href="<?= Helper::url($meRole === 'volunteer' ? 'volunteer' : 'admin') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'ระบบ') || str_contains($title ?? '', 'อาสา') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span><?= Helper::e(Helper::roleLabel($meRole)) ?></span>
             </a>
             <?php endif; ?>
         </div>

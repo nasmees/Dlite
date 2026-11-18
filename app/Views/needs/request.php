@@ -9,7 +9,7 @@ $inDrawer = false;
 ?>
 <div class="max-w-lg mx-auto">
     <div class="text-center pt-1 pb-4">
-        <h1 class="text-2xl font-bold text-brand-800">แจ้งเหตุ</h1>
+        <h1 class="text-2xl font-bold text-brand-800"><?= Helper::e(Helper::reportCta()) ?></h1>
         <p class="text-slate-500 mt-1.5 text-base">กรอกข้อมูลสั้นๆ ทีมงานจะติดต่อกลับ</p>
     </div>
 

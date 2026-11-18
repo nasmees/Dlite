@@ -7,9 +7,7 @@
  *          $isVolunteer, $isLoggedIn
  */
 $isStaff = !empty($isLoggedIn);
-$scenarioTitle = !empty($need['scenario']) && isset($scenarioLabels[$need['scenario']])
-    ? $scenarioLabels[$need['scenario']]
-    : 'รายละเอียดเหตุการณ์';
+$scenarioTitle = Helper::scenarioLabel($need['scenario'] ?? null) ?: 'รายละเอียดเหตุการณ์';
 ?>
 <div class="space-y-4">
     <div class="flex items-center gap-2 text-base text-slate-500">
@@ -79,7 +77,7 @@ $scenarioTitle = !empty($need['scenario']) && isset($scenarioLabels[$need['scena
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                     ประเภทเหตุการณ์
                 </dt>
-                <dd><span class="inline-flex items-center gap-2 text-base px-3 py-1.5 rounded-lg font-semibold <?= Helper::scenarioChipColor($need['scenario'] ?? 'other') ?>"><?= Helper::scenarioIcon($need['scenario'], 'w-5 h-5 shrink-0') ?><?= Helper::e($scenarioLabels[$need['scenario']] ?? '-') ?></span></dd>
+                <dd><span class="inline-flex items-center gap-2 text-base px-3 py-1.5 rounded-lg font-semibold <?= Helper::scenarioChipColor($need['scenario'] ?? 'other') ?>"><?= Helper::scenarioIcon($need['scenario'], 'w-5 h-5 shrink-0') ?><?= Helper::e(Helper::scenarioLabel($need['scenario'] ?? null) ?: '-') ?></span></dd>
             </div>
             <div>
                 <dt class="flex items-center gap-1.5 text-slate-500 mb-0.5">
@@ -104,7 +102,7 @@ $scenarioTitle = !empty($need['scenario']) && isset($scenarioLabels[$need['scena
                 </dt>
                 <dd class="flex flex-wrap gap-1.5">
                     <?php foreach ($need['need_types'] as $t): ?>
-                        <span class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 rounded-lg font-medium <?= Helper::needTypeChipColor($t) ?>"><?= Helper::needTypeIcon($t, 'w-5 h-5 shrink-0') ?><?= Helper::e($needTypes[$t] ?? $t) ?></span>
+                        <span class="inline-flex items-center gap-1.5 text-base px-3 py-1.5 rounded-lg font-medium <?= Helper::needTypeChipColor($t) ?>"><?= Helper::needTypeIcon($t, 'w-5 h-5 shrink-0') ?><?= Helper::e(Helper::needTypeLabel($t)) ?></span>
                     <?php endforeach; ?>
                     <?php if (empty($need['need_types'])): ?>-<?php endif; ?>
                 </dd>
@@ -178,7 +176,7 @@ $scenarioTitle = !empty($need['scenario']) && isset($scenarioLabels[$need['scena
     <div class="card p-4 border-2 border-emerald-300 bg-emerald-50/60">
         <button type="button" id="closeCaseToggle" class="w-full flex items-center justify-center gap-2 text-emerald-800 font-bold text-lg">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            ได้รับความช่วยเหลือแล้ว? ปิดเคสเอง
+            ได้รับความช่วยเหลือแล้ว?
         </button>
         <form id="closeCaseForm" class="hidden mt-4 space-y-2.5">
             <input type="hidden" name="csrf_token" value="<?= Helper::e($csrf) ?>">

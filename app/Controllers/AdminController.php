@@ -196,6 +196,28 @@ class AdminController
         View::json(['ok' => true, 'message' => $volunteer['is_active'] ? 'ระงับบัญชีแล้ว' : 'เปิดบัญชีแล้ว']);
     }
 
+    /**
+     * Permanently delete a volunteer account — admin only
+     */
+    public function deleteVolunteer(string $id): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+
+        $volunteer = User::find((int)$id);
+        if (!$volunteer || $volunteer['role'] !== 'volunteer') {
+            View::json(['ok' => false, 'message' => 'ไม่พบข้อมูลอาสาสมัคร'], 404);
+        }
+        if ((int)$volunteer['id'] === (int)Auth::user()['id']) {
+            View::json(['ok' => false, 'message' => 'ไม่สามารถลบบัญชีตัวเอง'], 422);
+        }
+
+        $ok = User::delete((int)$id);
+        View::json(['ok' => $ok, 'message' => $ok ? 'ลบอาสาสมัครแล้ว' : 'ลบไม่สำเร็จ']);
+    }
+
     public function updateVolunteerAvailability(string $id): void
     {
         Auth::requireAdmin();
@@ -286,6 +308,23 @@ class AdminController
             View::json(['ok' => false, 'message' => 'อัปเดตสถานะองค์กรไม่สำเร็จ'], 500);
         }
         View::json(['ok' => true, 'message' => 'อัปเดตสถานะองค์กรแล้ว']);
+    }
+
+    /**
+     * Permanently delete an organization — admin only
+     */
+    public function deleteOrganization(string $id): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+
+        if (!Organization::find((int)$id)) {
+            View::json(['ok' => false, 'message' => 'ไม่พบองค์กร'], 404);
+        }
+        $ok = Organization::delete((int)$id);
+        View::json(['ok' => $ok, 'message' => $ok ? 'ลบองค์กรแล้ว' : 'ลบไม่สำเร็จ']);
     }
 
     /**
@@ -620,7 +659,7 @@ class AdminController
                 $r['description'] ?? '',
                 $urgencyLabels[$r['urgency']] ?? $r['urgency'],
                 $statusLabels[$r['status']] ?? $r['status'],
-                $scenarioLabels[$r['scenario'] ?? ''] ?? ($r['scenario'] ?? ''),
+                Helper::scenarioLabel($r['scenario'] ?? null) ?: ($r['scenario'] ?? ''),
                 $r['assigned_name'] ?? '',
                 $r['created_at'],
             ]);
@@ -942,5 +981,155 @@ class AdminController
         }
         $ok = Poi::delete((int)$id);
         View::json(['ok' => $ok, 'message' => $ok ? 'ลบแล้ว' : 'ไม่สำเร็จ']);
+    }
+
+    /**
+     * Statistics dashboard — charts for requests, status, scenario, area (all staff)
+     */
+    public function stats(): void
+    {
+        Auth::requireLogin();
+
+        View::render('admin/stats', [
+            'title' => 'สถิติ',
+            'stats' => Need::reportStats(),
+            'statusLabels' => Helper::statusLabels(),
+            'urgencyLabels' => Helper::urgencyLabels(),
+            'user' => Auth::user(),
+            'isAdmin' => Auth::isAdmin(),
+        ], 'layouts/admin');
+    }
+
+    /**
+     * Back-office accounts (admin / viewer) — admin only
+     */
+    public function users(): void
+    {
+        Auth::requireAdmin();
+
+        View::render('admin/users', [
+            'title' => 'ผู้ดูแลระบบ',
+            'users' => User::staff(),
+            'csrf' => Auth::csrfToken(),
+            'user' => Auth::user(),
+            'isAdmin' => Auth::isAdmin(),
+        ], 'layouts/admin');
+    }
+
+    public function saveUser(): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+
+        $id = (int)($_POST['id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $password = (string)($_POST['password'] ?? '');
+        $role = $_POST['role'] ?? '';
+
+        if ($name === '' || $phone === '') {
+            View::json(['ok' => false, 'message' => 'กรุณากรอกชื่อและเบอร์โทรศัพท์'], 422);
+        }
+        if (!in_array($role, ['admin', 'viewer'], true)) {
+            View::json(['ok' => false, 'message' => 'บทบาทไม่ถูกต้อง'], 422);
+        }
+        if ($id === 0 && strlen($password) < 6) {
+            View::json(['ok' => false, 'message' => 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'], 422);
+        }
+        if ($id > 0 && $password !== '' && strlen($password) < 6) {
+            View::json(['ok' => false, 'message' => 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร'], 422);
+        }
+
+        $existing = $id > 0 ? User::find($id) : null;
+        if ($id > 0 && (!$existing || !in_array($existing['role'], ['admin', 'viewer'], true))) {
+            View::json(['ok' => false, 'message' => 'ไม่พบบัญชีผู้ดูแล'], 404);
+        }
+        if ($id > 0 && (int)$existing['id'] === (int)Auth::user()['id'] && $role !== $existing['role']) {
+            View::json(['ok' => false, 'message' => 'ไม่สามารถเปลี่ยนบทบาทบัญชีตัวเองได้'], 422);
+        }
+        if (User::phoneExists($phone, $id > 0 ? $id : null)) {
+            View::json(['ok' => false, 'message' => 'เบอร์โทรศัพท์นี้มีบัญชีแล้ว'], 422);
+        }
+
+        if ($id === 0) {
+            User::create(['name' => $name, 'phone' => $phone, 'password' => $password, 'role' => $role]);
+        } else {
+            $data = ['name' => $name, 'phone' => $phone, 'role' => $role];
+            if ($password !== '') $data['password'] = $password;
+            User::update($id, $data);
+            User::setRememberToken($id, null);
+        }
+
+        View::json(['ok' => true, 'message' => 'บันทึกบัญชีผู้ดูแลแล้ว']);
+    }
+
+    public function toggleUser(string $id): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+
+        $target = User::find((int)$id);
+        if (!$target || !in_array($target['role'], ['admin', 'viewer'], true)) {
+            View::json(['ok' => false, 'message' => 'ไม่พบบัญชีผู้ดูแล'], 404);
+        }
+        if ((int)$target['id'] === (int)Auth::user()['id']) {
+            View::json(['ok' => false, 'message' => 'ไม่สามารถระงับบัญชีตัวเอง'], 422);
+        }
+
+        User::setActive((int)$id, !(bool)$target['is_active']);
+        View::json(['ok' => true, 'message' => $target['is_active'] ? 'ระงับบัญชีแล้ว' : 'เปิดบัญชีแล้ว']);
+    }
+
+    /**
+     * Site branding — white-label app name + logo (admin only)
+     */
+    public function settings(): void
+    {
+        Auth::requireAdmin();
+
+        View::render('admin/settings', [
+            'title' => 'ตั้งค่าเว็บไซต์',
+            'appName' => Setting::get('app_name') ?: APP_NAME,
+            'appMode' => Helper::appMode(),
+            'logoUrl' => Helper::brandLogoUrl(),
+            'csrf' => Auth::csrfToken(),
+            'user' => Auth::user(),
+            'isAdmin' => Auth::isAdmin(),
+        ], 'layouts/admin');
+    }
+
+    public function saveSettings(): void
+    {
+        Auth::requireAdmin();
+        if (!Auth::verifyCsrf($_POST['csrf_token'] ?? null)) {
+            View::json(['ok' => false, 'message' => 'โทเค็นไม่ถูกต้อง'], 403);
+        }
+
+        $name = trim((string)($_POST['app_name'] ?? ''));
+        if ($name !== '') {
+            Setting::set('app_name', mb_substr($name, 0, 60));
+        }
+
+        $mode = $_POST['app_mode'] ?? '';
+        if (in_array($mode, ['disaster', 'relief'], true)) {
+            Setting::set('app_mode', $mode);
+            Need::flushCache();
+        }
+
+        if (!empty($_POST['remove_logo'])) {
+            Setting::set('brand_logo', null);
+        } elseif (!empty($_FILES['logo']['tmp_name']) && ($_FILES['logo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            $path = ImageUploader::store($_FILES['logo']);
+            if (!$path) {
+                View::json(['ok' => false, 'message' => 'อัปโหลดโลโก้ไม่สำเร็จ — รองรับ JPG/PNG/WEBP/GIF ไม่เกิน 2MB'], 422);
+            }
+            Setting::set('brand_logo', $path);
+        }
+
+        View::json(['ok' => true, 'message' => 'บันทึกการตั้งค่าแล้ว']);
     }
 }

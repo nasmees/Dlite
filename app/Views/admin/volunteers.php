@@ -86,10 +86,10 @@
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap gap-1.5 max-w-sm">
                                     <?php foreach ($volunteer['skills'] as $skill): ?>
-                                        <span class="rounded-md bg-blue-50 px-2 py-1 text-xs text-blue-800"><?= Helper::e($skills[$skill] ?? $skill) ?></span>
+                                        <span class="rounded-md bg-blue-50 px-2 py-1 text-xs text-blue-800"><?= Helper::e(Volunteer::skillLabel($skill)) ?></span>
                                     <?php endforeach; ?>
                                     <?php foreach ($volunteer['equipment'] as $item): ?>
-                                        <span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700"><?= Helper::e($equipment[$item] ?? $item) ?></span>
+                                        <span class="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-700"><?= Helper::e(Volunteer::equipmentLabel($item)) ?></span>
                                     <?php endforeach; ?>
                                     <?php if (empty($volunteer['skills']) && empty($volunteer['equipment'])): ?>
                                         <span class="text-xs text-slate-400">ยังไม่ระบุ</span>
@@ -103,7 +103,7 @@
                                     <?= $volunteer['availability'] === 'available' ? 'พร้อมงาน' : 'ติดภารกิจ' ?>
                                 </button>
                                 <?php if (!(bool)$volunteer['is_active']): ?>
-                                    <span class="block text-[11px] text-slate-400 mt-1">บัญชีปิดใช้งาน</span>
+                                    <span class="block text-[11px] text-slate-400 mt-1">รออนุมัติ/ปิดใช้งาน</span>
                                 <?php endif; ?>
                             </td>
                             <td class="px-4 py-3 text-right whitespace-nowrap">
@@ -113,6 +113,8 @@
                                     data-id="<?= (int)$volunteer['id'] ?>" data-active="<?= (int)$volunteer['is_active'] ?>">
                                     <?= $volunteer['is_active'] ? 'ระงับบัญชี' : 'เปิดบัญชี' ?>
                                 </button>
+                                <button type="button" class="delete-volunteer ml-1 rounded-md px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                                    data-id="<?= (int)$volunteer['id'] ?>" data-name="<?= Helper::e($volunteer['name']) ?>">ลบ</button>
                             </td>
                         </tr>
                     <?php endforeach; endif; ?>
@@ -306,6 +308,28 @@
                 window.location.reload();
             } catch (error) {
                 window.Toast.show(error.message || 'เปลี่ยนสถานะบัญชีไม่สำเร็จ', 'err');
+            }
+        });
+    });
+
+    document.querySelectorAll('.delete-volunteer').forEach(button => {
+        button.addEventListener('click', async () => {
+            if (!window.confirm('ลบอาสาสมัคร "' + button.dataset.name + '" ถาวร? เคสที่ได้รับมอบหมายจะถูกปลดออก')) return;
+            const body = new FormData();
+            body.append('csrf_token', csrf);
+            button.disabled = true;
+            try {
+                const response = await fetch(window.BASE_PATH + '/admin/volunteers/' + button.dataset.id + '/delete', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.message || 'ลบไม่สำเร็จ');
+                window.location.reload();
+            } catch (error) {
+                button.disabled = false;
+                window.Toast.show(error.message || 'ลบไม่สำเร็จ', 'err');
             }
         });
     });

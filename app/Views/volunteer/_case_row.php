@@ -7,7 +7,7 @@
 $scenarioKey = $n['scenario'] ?? 'other';
 $chip = Helper::scenarioChipColor($scenarioKey);
 $icon = Helper::scenarioIcon($scenarioKey, 'w-5 h-5');
-$title = Helper::scenarioLabels()[$scenarioKey] ?? 'เหตุการณ์';
+$title = Helper::scenarioLabel($scenarioKey) ?: 'เหตุการณ์';
 $place = ($n['district'] ?? '') !== '' ? $n['district'] : ($n['area_name'] ?? '');
 $loc = implode(' · ', array_values(array_unique(array_filter([$place, $n['province'] ?? '']))));
 $urg = $n['urgency'] ?? 'normal';

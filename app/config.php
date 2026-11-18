@@ -18,6 +18,8 @@ define('DB_PATH', STORAGE_PATH . '/database.sqlite');
 // Security
 define('SESSION_NAME', 'dsc_lite_session');
 define('CSRF_TOKEN_NAME', 'csrf_token');
+define('REMEMBER_COOKIE', 'dsc_lite_remember');
+define('REMEMBER_DAYS', 30);
 
 // Upload
 define('UPLOAD_MAX_SIZE', 2 * 1024 * 1024); // 2MB

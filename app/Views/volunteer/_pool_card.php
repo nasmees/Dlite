@@ -7,7 +7,7 @@
 $scenarioKey = $n['scenario'] ?? 'other';
 $chip = Helper::scenarioChipColor($scenarioKey);
 $icon = Helper::scenarioIcon($scenarioKey, 'w-7 h-7');
-$title = Helper::scenarioLabels()[$scenarioKey] ?? 'เหตุการณ์';
+$title = Helper::scenarioLabel($scenarioKey) ?: 'เหตุการณ์';
 $place = ($n['district'] ?? '') !== '' ? $n['district'] : ($n['area_name'] ?? '');
 $loc = implode(' · ', array_values(array_unique(array_filter([$place, $n['province'] ?? '']))));
 $urg = $n['urgency'] ?? 'normal';
@@ -48,7 +48,7 @@ $hasLoc = !empty($n['lat']) && !empty($n['lng']);
             <div class="flex items-center gap-1.5 mt-2.5 flex-wrap">
                 <?php foreach ($types as $t): ?>
                     <span class="inline-flex items-center gap-1 text-sm px-2.5 py-1 rounded-full font-semibold <?= Helper::needTypeChipColor($t) ?>">
-                        <?= Helper::needTypeIcon($t) ?><?= Helper::e(Helper::needTypes()[$t] ?? $t) ?>
+                        <?= Helper::needTypeIcon($t) ?><?= Helper::e(Helper::needTypeLabel($t)) ?>
                     </span>
                 <?php endforeach; ?>
             </div>

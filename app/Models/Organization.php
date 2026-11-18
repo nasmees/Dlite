@@ -82,6 +82,12 @@ class Organization
         return $id;
     }
 
+    public static function delete(int $id): bool
+    {
+        $db = Database::getInstance();
+        return (bool)$db->prepare("DELETE FROM organizations WHERE id = ?")->execute([$id]);
+    }
+
     public static function setActive(int $id, bool $active): bool
     {
         $db = Database::getInstance();

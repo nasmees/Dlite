@@ -4,14 +4,11 @@
  * and requires JS (progressive enhancement). No-JS users use /request page.
  * Expects: $areas, $needTypes, $csrf
  */
-$scenarios = [
-    ['key' => 'flood',    'label' => 'น้ำท่วม / ถนนท่วม',   'sub' => 'ขออาหาร น้ำ ที่พัก',        'types' => ['food','water','shelter'], 'urgency' => 'high',     'sos' => false],
-    ['key' => 'evac',     'label' => 'ต้องอพยพ / บ้านเสียหาย','sub' => 'เร่งด่วน ต้องการที่พัก',      'types' => ['shelter','evacuation'],   'urgency' => 'critical', 'sos' => false],
-    ['key' => 'sos',      'label' => 'เหตุฉุกเฉิน SOS',       'sub' => 'อันตรายถึงชีวิต ต้องการทันที', 'types' => ['medicine','evacuation'],  'urgency' => 'critical', 'sos' => true],
-    ['key' => 'medical',  'label' => 'เจ็บป่วย / ได้รับบาดเจ็บ','sub' => 'ต้องการยาและการรักษา',      'types' => ['medicine'],               'urgency' => 'high',     'sos' => false],
-    ['key' => 'supplies', 'label' => 'ขาดแคลนอาหาร / น้ำ',    'sub' => 'แจ้งจุดแจกจ่าย',             'types' => ['food','water'],           'urgency' => 'normal',   'sos' => false],
-    ['key' => 'other',    'label' => 'ความเสียหายอื่นๆ',       'sub' => 'เล่าเหตุการณ์โดยย่อ',         'types' => ['other'],                  'urgency' => 'normal',   'sos' => false],
-];
+$scenarios = Helper::scenarioCards();
+$reliefMode = Helper::appMode() === 'relief';
+$ctaColorCls = $reliefMode
+    ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+    : 'bg-red-600 hover:bg-red-700 active:bg-red-800';
 ?>
 <form id="reportForm" class="flex flex-col h-full min-h-0" enctype="multipart/form-data"
       action="<?= Helper::url('request') ?>" method="post">
@@ -25,7 +22,7 @@ $scenarios = [
     <div class="sheet-body px-4 py-4 space-y-4">
         <?php if (!empty($inDrawer)): ?>
         <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-slate-800">แจ้งเหตุ</h2>
+            <h2 class="text-lg font-bold text-slate-800"><?= Helper::e(Helper::reportCta()) ?></h2>
             <button type="button" id="drawerClose" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
@@ -36,7 +33,7 @@ $scenarios = [
         <div>
             <p class="flex items-center gap-1.5 text-base font-bold text-slate-800 mb-2">
                 <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                เกิดอะไรขึ้น? <span class="text-red-500">*</span>
+                <?= $reliefMode ? 'ต้องการบริการอะไร?' : 'เกิดอะไรขึ้น?' ?> <span class="text-red-500">*</span>
             </p>
             <div class="space-y-2" id="scenarioList">
                 <?php foreach ($scenarios as $s): ?>
@@ -104,7 +101,7 @@ $scenarios = [
         <div class="rounded-2xl border-2 border-slate-300 bg-white p-5 space-y-4 shadow-sm mb-4">
             <p class="flex items-center gap-1.5 text-base font-bold text-slate-800">
                 <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                รายละเอียดเหตุการณ์
+                <?= $reliefMode ? 'รายละเอียดคำขอ' : 'รายละเอียดเหตุการณ์' ?>
             </p>
 
             <!-- Landmark (single simple field per spec) -->
@@ -192,8 +189,8 @@ $scenarios = [
 
     <!-- Sticky CTA: Deep Trust Blue, turns red on SOS -->
     <div class="sheet-foot border-t border-slate-300 bg-white px-4 pt-3 pb-3 <?= empty($inDrawer) ? 'sticky bottom-[4.5rem] z-10' : '' ?>">
-        <button type="submit" id="rf_submit" class="w-full min-h-[56px] rounded-2xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-lg font-bold transition shadow-lg">
-            ส่งแจ้งเหตุทันที
+        <button type="submit" id="rf_submit" class="w-full min-h-[56px] rounded-2xl <?= $ctaColorCls ?> text-white text-lg font-bold transition shadow-lg">
+            <?= $reliefMode ? 'ส่งคำขอเลย' : 'ส่งแจ้งเหตุทันที' ?>
         </button>
         <p class="text-sm text-center text-slate-500 mt-1.5">ข้อมูลถูกส่งถึงทีมประสานงานโดยตรง</p>
     </div>
@@ -244,7 +241,7 @@ $scenarios = [
 
     function updateCtaColor(urgent) {
         submitBtn.className = 'w-full min-h-[56px] rounded-2xl text-white text-lg font-bold transition shadow-lg ' +
-            'bg-red-600 hover:bg-red-700 active:bg-red-800';
+            '<?= $ctaColorCls ?>';
     }
 
     // ---------- Draft ----------

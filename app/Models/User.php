@@ -13,6 +13,17 @@ class User
         return $stmt->fetch() ?: null;
     }
 
+    /**
+     * Find by phone regardless of active status — used to detect pending accounts
+     */
+    public static function findByPhoneAny(string $phone): ?array
+    {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("SELECT * FROM users WHERE phone = ?");
+        $stmt->execute([$phone]);
+        return $stmt->fetch() ?: null;
+    }
+
     public static function find(int $id): ?array
     {
         $db = Database::getInstance();
@@ -67,6 +78,15 @@ class User
         return $db->query("SELECT id, name, phone, role, is_active, created_at FROM users ORDER BY id")->fetchAll();
     }
 
+    /**
+     * Back-office accounts only (admin + viewer) — volunteers have their own directory
+     */
+    public static function staff(): array
+    {
+        $db = Database::getInstance();
+        return $db->query("SELECT id, name, phone, role, is_active, created_at FROM users WHERE role IN ('admin','viewer') ORDER BY id")->fetchAll();
+    }
+
     public static function update(int $id, array $data): bool
     {
         $db = Database::getInstance();
@@ -88,10 +108,52 @@ class User
         return $db->prepare("UPDATE users SET " . implode(', ', $sets) . " WHERE id = ?")->execute($params);
     }
 
+    /**
+     * Permanently delete a user — unassigns their cases first (FK constraints)
+     */
+    public static function delete(int $id): bool
+    {
+        $db = Database::getInstance();
+        $db->beginTransaction();
+        try {
+            $db->prepare("UPDATE needs SET assigned_to = NULL WHERE assigned_to = ?")->execute([$id]);
+            $db->prepare("UPDATE updates SET user_id = NULL WHERE user_id = ?")->execute([$id]);
+            $ok = $db->prepare("DELETE FROM users WHERE id = ?")->execute([$id]);
+            $db->commit();
+            return (bool)$ok;
+        } catch (Throwable $e) {
+            $db->rollBack();
+            return false;
+        }
+    }
+
     public static function setActive(int $id, bool $active): bool
     {
         $db = Database::getInstance();
         return $db->prepare("UPDATE users SET is_active = ? WHERE id = ?")
                   ->execute([$active ? 1 : 0, $id]);
+    }
+
+    public static function setRememberToken(int $id, ?string $tokenHash): bool
+    {
+        $db = Database::getInstance();
+        return $db->prepare("UPDATE users SET remember_token = ? WHERE id = ?")
+                  ->execute([$tokenHash, $id]);
+    }
+
+    /**
+     * Resolve a remember-me cookie value ("uid:token") to a user row.
+     * Token is stored hashed — cookie holds the raw token.
+     */
+    public static function findByRememberCookie(string $cookie): ?array
+    {
+        $parts = explode(':', $cookie, 2);
+        if (count($parts) !== 2) return null;
+        [$uid, $token] = $parts;
+        if (!ctype_digit($uid) || strlen($token) < 20) return null;
+        $user = self::find((int)$uid);
+        if (!$user || empty($user['remember_token']) || !($user['is_active'] ?? 0)) return null;
+        if (!hash_equals($user['remember_token'], hash('sha256', $token))) return null;
+        return $user;
     }
 }

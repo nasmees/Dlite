@@ -27,7 +27,7 @@ $tabs = ['active' => 'กำลังดำเนินการ'] + $statusLabe
         </div>
         <div class="flex items-center gap-3 shrink-0">
             <a href="<?= Helper::url('map') ?>" class="text-sm text-brand-600 font-medium">แผนที่</a>
-            <a href="<?= Helper::url() ?>" class="text-sm font-semibold text-white bg-red-600 hover:bg-red-700 px-3.5 py-2 rounded-xl">+ แจ้งใหม่</a>
+            <a href="<?= Helper::url() ?>" class="text-sm font-semibold text-white <?= Helper::appMode() === 'relief' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700' ?> px-3.5 py-2 rounded-xl">+ แจ้งใหม่</a>
         </div>
     </div>
 
@@ -111,7 +111,7 @@ $tabs = ['active' => 'กำลังดำเนินการ'] + $statusLabe
                         !empty($isLoggedIn) && $n['reporter_name'] !== '' ? [$n['reporter_name']] : [],
                         $locParts ? [implode(' · ', array_slice($locParts, 0, 2))] : [],
                         ((int)($n['people_count'] ?? 0) > 0) ? ['~' . number_format((int)$n['people_count']) . ' คน'] : [],
-                        array_map(fn($t) => $needTypes[$t] ?? $t, array_slice($n['need_types'] ?? [], 0, 3))
+                        array_map(fn($t) => Helper::needTypeLabel($t), array_slice($n['need_types'] ?? [], 0, 3))
                     );
                     if (count($n['need_types'] ?? []) > 3) {
                         $meta[] = '+' . (count($n['need_types']) - 3);
@@ -124,7 +124,7 @@ $tabs = ['active' => 'กำลังดำเนินการ'] + $statusLabe
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
-                                <p class="text-sm font-semibold text-slate-800 truncate"><?= !empty($n['scenario']) && isset($scenarioLabels[$n['scenario']]) ? Helper::e($scenarioLabels[$n['scenario']]) : 'เหตุการณ์' ?> <span class="font-normal text-slate-400">· <?= Helper::e($n['code']) ?> · <?= Helper::timeAgo($n['created_at']) ?></span></p>
+                                <p class="text-sm font-semibold text-slate-800 truncate"><?= Helper::e(Helper::scenarioLabel($n['scenario'] ?? null) ?: 'เหตุการณ์') ?> <span class="font-normal text-slate-400">· <?= Helper::e($n['code']) ?> · <?= Helper::timeAgo($n['created_at']) ?></span></p>
                                 <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium <?= Helper::statusColor($n['status']) ?> shrink-0"><?= Helper::statusDot($n['status']) ?><?= Helper::e($statusLabels[$n['status']] ?? $n['status']) ?></span>
                             </div>
                             <p class="text-sm text-slate-600 truncate mt-0.5"><?= Helper::e(implode(' · ', $meta)) ?><?= $isUrgent ? ' · <span class="' . ($n['urgency'] === 'critical' ? 'text-red-600 font-semibold' : 'text-orange-600 font-medium') . '">' . Helper::e($urgencyLabels[$n['urgency']]) . '</span>' : '' ?></p>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#f8fafc">
-    <title><?= Helper::e($title ?? 'Admin') ?> | Deep South Care Lite</title>
+    <title><?= Helper::e($title ?? 'Admin') ?> | <?= Helper::e(Helper::appName()) ?></title>
     
     <!-- Kanit Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -232,8 +232,12 @@
         elseif (str_starts_with($reqPath, '/admin/organizations')) $adminNav = 'organizations';
         elseif (str_starts_with($reqPath, '/admin/areas')) $adminNav = 'areas';
         elseif (str_starts_with($reqPath, '/admin/announcements')) $adminNav = 'announcements';
+        elseif (str_starts_with($reqPath, '/admin/users')) $adminNav = 'users';
+        elseif (str_starts_with($reqPath, '/admin/stats')) $adminNav = 'stats';
+        elseif (str_starts_with($reqPath, '/admin/settings')) $adminNav = 'settings';
         $roleLabels = ['admin' => 'ผู้ดูแลระบบ', 'volunteer' => 'อาสาสมัคร', 'viewer' => 'ผู้ดู'];
         $roleLabel = $roleLabels[$user['role'] ?? ''] ?? ($user['role'] ?? '');
+        $brandLogo = Helper::brandLogoUrl();
     ?>
     <!-- Top bar (mobile) -->
     <header class="fixed top-0 inset-x-0 z-30 lg:hidden bg-white border-b border-slate-200">
@@ -242,10 +246,14 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
             <div class="flex items-center gap-2.5 min-w-0 px-1">
-                <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 font-semibold text-xs">DR</div>
+                <?php if ($brandLogo): ?>
+                    <img src="<?= Helper::e($brandLogo) ?>" alt="" class="w-8 h-8 rounded-lg object-contain bg-white border border-slate-200 shrink-0">
+                <?php else: ?>
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 font-semibold text-xs">DR</div>
+                <?php endif; ?>
                 <div class="min-w-0">
-                    <p class="font-semibold text-slate-800 leading-tight truncate">Relief Admin</p>
-                    <p class="text-xs text-slate-500 truncate">Disaster Relief System</p>
+                    <p class="font-semibold text-slate-800 leading-tight truncate"><?= Helper::e(Helper::appName()) ?></p>
+                    <p class="text-xs text-slate-500 truncate">Admin Panel</p>
                 </div>
             </div>
         </div>
@@ -258,12 +266,16 @@
     <aside id="sidebar" class="admin-sidebar flex flex-col">
         <!-- Logo/Brand -->
         <div class="sidebar-brand p-4 border-b border-slate-200 flex items-center gap-3">
-            <div class="sidebar-brand-logo w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-water text-lg"></i>
-            </div>
+            <?php if ($brandLogo): ?>
+                <img src="<?= Helper::e($brandLogo) ?>" alt="" class="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200 shrink-0">
+            <?php else: ?>
+                <div class="sidebar-brand-logo w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-water text-lg"></i>
+                </div>
+            <?php endif; ?>
             <div class="sidebar-brand-copy min-w-0">
-                <h1 class="font-semibold text-slate-800 leading-tight">Relief Admin</h1>
-                <p class="text-xs text-slate-500 truncate">Disaster Relief System</p>
+                <h1 class="font-semibold text-slate-800 leading-tight truncate"><?= Helper::e(Helper::appName()) ?></h1>
+                <p class="text-xs text-slate-500 truncate">Admin Panel</p>
             </div>
             <button id="sidebarCollapse" type="button" class="hidden lg:inline-flex ml-auto p-2 rounded-md hover:bg-slate-100" aria-label="ย่อหรือขยายเมนู" aria-expanded="true">
                 <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5h16M4 12h16M4 19h16M9 5v14"/></svg>
@@ -282,11 +294,19 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <span class="sidebar-link-label">จัดการคำขอ</span>
                 </a>
+                <a href="<?= Helper::url('admin/stats') ?>" title="สถิติ" class="sidebar-link <?= $adminNav === 'stats' ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span class="sidebar-link-label">สถิติ</span>
+                </a>
                 <a href="<?= Helper::url('admin/announcements') ?>" title="ประกาศ" class="sidebar-link <?= $adminNav === 'announcements' ? 'active' : '' ?>">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                     <span class="sidebar-link-label">ประกาศ</span>
                 </a>
                 <?php if (!empty($isAdmin)): ?>
+                <a href="<?= Helper::url('admin/users') ?>" title="ผู้ดูแลระบบ" class="sidebar-link <?= $adminNav === 'users' ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <span class="sidebar-link-label">ผู้ดูแลระบบ</span>
+                </a>
                 <a href="<?= Helper::url('admin/volunteers') ?>" title="อาสาสมัคร" class="sidebar-link <?= $adminNav === 'volunteers' ? 'active' : '' ?>">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m6-10a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
                     <span class="sidebar-link-label">อาสาสมัคร</span>
@@ -303,32 +323,45 @@
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
                     <span class="sidebar-link-label">จุดสำคัญ</span>
                 </a>
+                <a href="<?= Helper::url('admin/settings') ?>" title="ตั้งค่าเว็บไซต์" class="sidebar-link <?= $adminNav === 'settings' ? 'active' : '' ?>">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="sidebar-link-label">ตั้งค่าเว็บไซต์</span>
+                </a>
                 <?php endif; ?>
             </div>
         </nav>
         
         <!-- User Info & Logout -->
         <div class="p-3 border-t border-slate-200">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                </div>
-                <div class="sidebar-user-copy flex-1 min-w-0">
-                    <p class="text-sm font-medium text-slate-800 truncate"><?= Helper::e($user['name'] ?? 'Admin') ?></p>
-                    <p class="text-xs text-slate-500"><?= Helper::e($roleLabel) ?></p>
+            <div class="relative">
+                <button type="button" id="profileToggle" class="w-full flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-slate-50 transition text-left">
+                    <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div class="sidebar-user-copy flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-800 truncate"><?= Helper::e($user['name'] ?? 'Admin') ?></p>
+                        <p class="text-xs text-slate-500"><?= Helper::e($roleLabel) ?></p>
+                    </div>
+                    <svg class="sidebar-user-copy w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                </button>
+                <div id="profileMenu" class="hidden absolute bottom-full left-0 mb-2 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
+                    <div class="px-3.5 py-2.5 border-b border-slate-100">
+                        <p class="text-sm font-semibold text-slate-800 truncate"><?= Helper::e($user['name'] ?? 'Admin') ?></p>
+                        <p class="text-xs text-slate-500"><?= Helper::e($roleLabel) ?></p>
+                    </div>
+                    <a href="<?= Helper::url('password') ?>" class="flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                        เปลี่ยนรหัสผ่าน
+                    </a>
+                    <a href="<?= Helper::url('logout') ?>" class="flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        ออกจากระบบ
+                    </a>
                 </div>
             </div>
-            <a href="<?= Helper::url() ?>" title="เปิดเว็บประชาชน" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition rounded-lg text-sm">
+            <a href="<?= Helper::url() ?>" title="เปิดเว็บประชาชน" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 mt-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition rounded-lg text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 <span class="sidebar-footer-label">เปิดเว็บประชาชน</span>
-            </a>
-            <a href="<?= Helper::url('password') ?>" title="เปลี่ยนรหัสผ่าน" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 <?= $reqPath === '/password' ? 'text-brand-700 bg-brand-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' ?> transition rounded-lg text-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                <span class="sidebar-footer-label">เปลี่ยนรหัสผ่าน</span>
-            </a>
-            <a href="<?= Helper::url('logout') ?>" title="ออกจากระบบ" class="sidebar-footer-link flex items-center gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition rounded-lg text-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                <span class="sidebar-footer-label">ออกจากระบบ</span>
             </a>
         </div>
     </aside>
@@ -392,6 +425,21 @@
                 }
             });
         });
+
+        // Profile dropdown (password / logout)
+        const profileToggle = document.getElementById('profileToggle');
+        const profileMenu = document.getElementById('profileMenu');
+        if (profileToggle && profileMenu) {
+            profileToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!profileMenu.classList.contains('hidden') && !profileMenu.contains(e.target) && e.target !== profileToggle) {
+                    profileMenu.classList.add('hidden');
+                }
+            });
+        }
     </script>
 
     <?php require APP_PATH . '/Views/partials/announcement_popup.php'; ?>

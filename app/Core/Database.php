@@ -230,6 +230,11 @@ class Database
                     version TEXT PRIMARY KEY,
                     applied_at TEXT DEFAULT (datetime('now','localtime'))
                 );
+
+                CREATE TABLE IF NOT EXISTS settings (
+                    skey TEXT PRIMARY KEY,
+                    svalue TEXT
+                );
             ");
 
             // Ensure needs.scenario exists (added after initial release)
@@ -249,6 +254,12 @@ class Database
                 $db->exec("ALTER TABLE needs ADD COLUMN client_token TEXT");
             }
             $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_needs_client_token ON needs(client_token)");
+
+            // Remember-me token for 30-day persistent login
+            $userCols = $db->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('remember_token', $userCols, true)) {
+                $db->exec("ALTER TABLE users ADD COLUMN remember_token TEXT");
+            }
 
             $version = 'admin_directory_demo_v1';
             $stmt = $db->prepare("SELECT 1 FROM admin_migrations WHERE version = ?");

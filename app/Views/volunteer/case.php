@@ -28,7 +28,7 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
                     <?= Helper::scenarioIcon($scenarioKey, 'w-6 h-6') ?>
                 </div>
                 <div class="min-w-0">
-                    <h1 class="text-xl font-bold text-slate-900"><?= Helper::e(Helper::scenarioLabels()[$scenarioKey] ?? 'เหตุการณ์') ?></h1>
+                    <h1 class="text-xl font-bold text-slate-900"><?= Helper::e(Helper::scenarioLabel($scenarioKey) ?: 'เหตุการณ์') ?></h1>
                     <p class="text-sm text-slate-500"><?= Helper::e($need['code']) ?> · <?= Helper::timeAgo($need['created_at']) ?></p>
                 </div>
             </div>
@@ -77,7 +77,7 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
                 <dt class="text-slate-500 text-sm mb-1">ความต้องการ</dt>
                 <dd class="flex flex-wrap gap-1.5">
                     <?php foreach (($need['need_types'] ?? []) as $t): ?>
-                        <span class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium <?= Helper::needTypeChipColor($t) ?>"><?= Helper::needTypeIcon($t, 'w-4 h-4') ?><?= Helper::e($needTypes[$t] ?? $t) ?></span>
+                        <span class="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium <?= Helper::needTypeChipColor($t) ?>"><?= Helper::needTypeIcon($t, 'w-4 h-4') ?><?= Helper::e(Helper::needTypeLabel($t)) ?></span>
                     <?php endforeach; ?>
                     <?php if (empty($need['need_types'])): ?>-<?php endif; ?>
                 </dd>
