@@ -891,6 +891,7 @@ class AdminController
 
         View::render('admin/pois', [
             'title' => 'จุดสำคัญบนแผนที่',
+            'includeMapAssets' => true,
             'pois' => Poi::all(),
             'poiCategories' => Helper::poiCategories(),
             'csrf' => Auth::csrfToken(),

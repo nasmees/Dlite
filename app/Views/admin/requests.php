@@ -32,23 +32,30 @@ $exportUrl = Helper::url('admin/requests/export' . ($exportParams ? '?' . http_b
         </div>
     </div>
 
-    <!-- Status quick filters -->
-    <div class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" role="navigation" aria-label="กรองตามสถานะ">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <?php
-        $tabs = [
-            '' => ['ทั้งหมด', $counts['all'] ?? 0],
-            'pending' => ['รอรับเรื่อง', $counts['pending'] ?? 0],
-            'accepted' => ['รับเรื่องแล้ว', $counts['accepted'] ?? 0],
-            'in_progress' => ['กำลังช่วย', $counts['in_progress'] ?? 0],
-            'completed' => ['สำเร็จ', $counts['completed'] ?? 0],
-            'cancelled' => ['ยกเลิก', $counts['cancelled'] ?? 0],
+        $statCards = [
+            '' => ['ทั้งหมด', $counts['all'] ?? 0, 'bg-slate-100 text-slate-700 border-slate-300', 'ring-slate-400', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+            'pending' => ['รอรับเรื่อง', $counts['pending'] ?? 0, 'bg-red-50 text-red-700 border-red-200', 'ring-red-500', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+            'accepted' => ['รับเรื่องแล้ว', $counts['accepted'] ?? 0, 'bg-blue-50 text-blue-700 border-blue-200', 'ring-blue-500', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+            'in_progress' => ['กำลังช่วย', $counts['in_progress'] ?? 0, 'bg-amber-50 text-amber-700 border-amber-200', 'ring-amber-500', 'M13 10V3L4 14h7v7l9-11h-7z'],
+            'completed' => ['สำเร็จ', $counts['completed'] ?? 0, 'bg-emerald-50 text-emerald-700 border-emerald-200', 'ring-emerald-500', 'M5 13l4 4L19 7'],
+            'cancelled' => ['ยกเลิก', $counts['cancelled'] ?? 0, 'bg-slate-50 text-slate-500 border-slate-300', 'ring-slate-400', 'M6 18L18 6M6 6l12 12'],
         ];
-        foreach ($tabs as $val => [$label, $count]): ?>
+        $curStatus = $filters['status'] ?? '';
+        foreach ($statCards as $val => [$label, $count, $bgClass, $ringCls, $iconPath]): ?>
             <a href="<?= $qs(['status' => $val]) ?>"
-               aria-current="<?= ($filters['status'] ?? '') === $val ? 'page' : 'false' ?>"
-               class="shrink-0 relative px-4 py-2 rounded-full text-sm font-medium transition <?= ($filters['status'] ?? '') === $val ? 'bg-brand-100 text-brand-800' : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50' ?>">
-                <?= Helper::e($label) ?>
-                <span class="ml-1.5 text-xs opacity-80"><?= (int)$count ?></span>
+               class="card border-2 hover:shadow-md transition <?= $curStatus === $val ? 'ring-2 ring-offset-1 ' . $ringCls . ' shadow-md' : '' ?> <?= $bgClass ?>">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-white/80">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?= $iconPath ?>"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-2xl font-bold leading-none"><?= (int)$count ?></div>
+                        <div class="text-xs font-medium truncate"><?= Helper::e($label) ?></div>
+                    </div>
+                </div>
             </a>
         <?php endforeach; ?>
     </div>
@@ -66,72 +73,79 @@ $exportUrl = Helper::url('admin/requests/export' . ($exportParams ? '?' . http_b
         <button type="submit" class="btn-primary px-5 shrink-0">ค้นหา</button>
     </form>
 
-    <!-- Table -->
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px] text-sm">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200 text-left">
-                        <th class="px-3 py-3 w-10"><input type="checkbox" id="checkAll" class="rounded border-slate-300" aria-label="เลือกทั้งหมด"></th>
-                        <th class="px-4 py-3 font-medium text-slate-600">รหัส / ผู้แจ้ง</th>
-                        <th class="px-4 py-3 font-medium text-slate-600">พื้นที่</th>
-                        <th class="px-4 py-3 font-medium text-slate-600">ความต้องการ</th>
-                        <th class="px-4 py-3 font-medium text-slate-600">สถานะ</th>
-                        <th class="px-4 py-3 font-medium text-slate-600">ผู้รับผิดชอบ</th>
-                        <th class="px-4 py-3 font-medium text-slate-600">เวลา</th>
-                        <th class="px-4 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <?php if (empty($needs)): ?>
-                        <tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">ไม่มีคำขอที่ตรงกับเงื่อนไข</td></tr>
-                    <?php else: foreach ($needs as $n): ?>
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="px-3 py-3"><input type="checkbox" class="case-check rounded border-slate-300" value="<?= (int)$n['id'] ?>" aria-label="เลือกรายการ <?= Helper::e($n['code']) ?>"></td>
-                            <td class="px-4 py-3">
-                                <div class="font-medium text-slate-800"><?= Helper::e($n['code']) ?></div>
-                                <div class="text-slate-500"><?= Helper::e($n['reporter_name']) ?> · <?= (int)$n['people_count'] ?> คน</div>
-                                <?php if (!empty($n['scenario'])): ?>
-                                    <span class="inline-block mt-1 text-[11px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-medium"><?= Helper::e(Helper::scenarioLabels()[$n['scenario']] ?? $n['scenario']) ?></span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600">
-                                <?= Helper::e($n['area_name'] ?? '-') ?>
-                                <?php if ($n['address']): ?><div class="text-xs text-slate-400 truncate max-w-[160px]"><?= Helper::e($n['address']) ?></div><?php endif; ?>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-1 max-w-[200px]">
-                                    <?php foreach (array_slice($n['need_types'], 0, 2) as $t): ?>
-                                        <span class="text-xs bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded"><?= Helper::e($needTypes[$t] ?? $t) ?></span>
-                                    <?php endforeach; ?>
-                                    <?php if (count($n['need_types']) > 2): ?><span class="text-xs text-slate-400">+<?= count($n['need_types']) - 2 ?></span><?php endif; ?>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="text-xs px-2 py-1 rounded-full font-medium inline-flex items-center gap-1.5 <?= Helper::statusColor($n['status']) ?>"><?= Helper::statusDot($n['status']) ?><?= Helper::e($statusLabels[$n['status']] ?? $n['status']) ?></span>
-                                <?php if ($n['urgency'] !== 'normal'): ?>
-                                    <div class="mt-1"><span class="text-xs px-2 py-0.5 rounded-full <?= Helper::urgencyColor($n['urgency']) ?>"><?= Helper::e($urgencyLabels[$n['urgency']] ?? '') ?></span></div>
-                                <?php endif; ?>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600"><?= Helper::e($n['assigned_name'] ?? '—') ?></td>
-                            <td class="px-4 py-3 text-slate-500 whitespace-nowrap"><?= Helper::timeAgo($n['created_at']) ?></td>
-                            <td class="px-4 py-3 text-right">
-                                <a href="<?= Helper::url('admin/requests/' . $n['id']) ?>" class="text-brand-600 font-medium hover:underline text-sm">จัดการ →</a>
-                            </td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                </tbody>
-            </table>
-        </div>
+    <!-- Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <?php if (empty($needs)): ?>
+            <div class="col-span-full bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-400">ไม่มีคำขอที่ตรงกับเงื่อนไข</div>
+        <?php else: foreach ($needs as $n): ?>
+            <div class="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition relative flex flex-col">
+                <!-- Checkbox top-right -->
+                <div class="absolute top-3 right-3">
+                    <input type="checkbox" class="case-check rounded border-slate-300 w-4 h-4" value="<?= (int)$n['id'] ?>" aria-label="เลือกรายการ <?= Helper::e($n['code']) ?>">
+                </div>
+
+                <!-- Header: code + status -->
+                <div class="flex items-start gap-3 mb-3 pr-6">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 <?= Helper::statusBgColor($n['status']) ?>">
+                        <?= Helper::statusIcon($n['status']) ?>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-slate-800"><?= Helper::e($n['code']) ?></div>
+                        <div class="text-xs text-slate-500"><?= Helper::timeAgo($n['created_at']) ?></div>
+                    </div>
+                </div>
+
+                <!-- Urgency badge -->
+                <?php if ($n['urgency'] !== 'normal'): ?>
+                    <div class="mb-2">
+                        <span class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium <?= Helper::urgencyColor($n['urgency']) ?>">
+                            <?= Helper::urgencyIcon($n['urgency']) ?> <?= Helper::e($urgencyLabels[$n['urgency']] ?? '') ?>
+                        </span>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Location -->
+                <div class="flex items-center gap-2 text-sm text-slate-600 mb-2">
+                    <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                    <span class="truncate"><?= Helper::e($n['area_name'] ?? '-') ?></span>
+                </div>
+
+                <!-- Need types with icons -->
+                <div class="flex flex-wrap gap-1.5 mb-3">
+                    <?php foreach (array_slice($n['need_types'], 0, 3) as $t): ?>
+                        <span class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-700">
+                            <?= Helper::needTypeIcon($t) ?> <?= Helper::e($needTypes[$t] ?? $t) ?>
+                        </span>
+                    <?php endforeach; ?>
+                    <?php if (count($n['need_types']) > 3): ?><span class="text-xs text-slate-400">+<?= count($n['need_types']) - 3 ?></span><?php endif; ?>
+                </div>
+
+                <!-- People count + assignee -->
+                <div class="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3 mb-3">
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span><?= (int)$n['people_count'] ?> คน</span>
+                    </div>
+                    <div class="truncate max-w-[120px]">
+                        <?= Helper::e($n['assigned_name'] ?? '—') ?>
+                    </div>
+                </div>
+
+                <!-- Action button -->
+                <a href="<?= Helper::url('admin/requests/' . $n['id']) ?>" class="mt-auto w-full btn-primary text-center text-sm py-2.5">
+                    จัดการ
+                </a>
+            </div>
+        <?php endforeach; endif; ?>
     </div>
 
     <!-- Pagination -->
     <?php if (($pagination['pages'] ?? 1) > 1):
         $cur = $pagination['page']; $pages = $pagination['pages']; ?>
         <div class="flex items-center justify-center gap-2">
-            <?php if ($cur > 1): ?><a href="<?= Helper::e($pageUrl($cur - 1)) ?>" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm">← ก่อนหน้า</a><?php endif; ?>
-            <span class="text-sm text-slate-500">หน้า <?= $cur ?> / <?= $pages ?></span>
-            <?php if ($cur < $pages): ?><a href="<?= Helper::e($pageUrl($cur + 1)) ?>" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm">ถัดไป →</a><?php endif; ?>
+            <?php if ($cur > 1): ?><a href="<?= Helper::e($pageUrl($cur - 1)) ?>" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50">← ก่อนหน้า</a><?php endif; ?>
+            <span class="text-sm text-slate-500 px-3">หน้า <?= $cur ?> / <?= $pages ?></span>
+            <?php if ($cur < $pages): ?><a href="<?= Helper::e($pageUrl($cur + 1)) ?>" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium hover:bg-slate-50">ถัดไป →</a><?php endif; ?>
         </div>
     <?php endif; ?>
 </div>
@@ -160,7 +174,6 @@ $exportUrl = Helper::url('admin/requests/export' . ($exportParams ? '?' . http_b
     const checks = document.querySelectorAll('.case-check');
     const bar = document.getElementById('bulkBar');
     const countEl = document.getElementById('bulkCount');
-    const checkAll = document.getElementById('checkAll');
     if (!bar) return;
 
     function selected() {
@@ -170,14 +183,8 @@ $exportUrl = Helper::url('admin/requests/export' . ($exportParams ? '?' . http_b
         const n = selected().length;
         countEl.textContent = n;
         bar.classList.toggle('hidden', n === 0);
-        checkAll.checked = n > 0 && n === checks.length;
-        checkAll.indeterminate = n > 0 && n < checks.length;
     }
     checks.forEach(c => c.addEventListener('change', refresh));
-    checkAll.addEventListener('change', () => {
-        checks.forEach(c => { c.checked = checkAll.checked; });
-        refresh();
-    });
     document.getElementById('bulkClear').addEventListener('click', () => {
         checks.forEach(c => { c.checked = false; });
         refresh();

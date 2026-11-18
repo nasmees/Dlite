@@ -3,8 +3,8 @@
     .leaflet-popup-content { font-family: 'Kanit', sans-serif; min-width: 200px; font-size: 14px; line-height: 1.5; }
     .leaflet-popup-content a { font-weight: 600; }
     .map-chip {
-        flex-shrink: 0; padding: .35rem .75rem; border-radius: 9999px;
-        font-size: .78rem; font-weight: 600; white-space: nowrap;
+        flex-shrink: 0; padding: .3rem .65rem; border-radius: 9999px;
+        font-size: .75rem; font-weight: 600; white-space: nowrap;
         box-shadow: 0 2px 8px rgba(0,0,0,.18);
     }
     .map-legend {
@@ -30,7 +30,7 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
         ตัวกรอง
     </button>
-    <div id="filterPanel" class="absolute top-11 right-2 z-[1001] hidden bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-2 flex flex-wrap gap-1.5 justify-end max-w-[calc(100%-1rem)]">
+    <div id="filterPanel" class="absolute top-11 right-2 z-[1001] hidden bg-white/95 backdrop-blur rounded-xl shadow-lg border border-slate-200 p-2 flex flex-wrap gap-1.5 justify-end max-w-[calc(100%-4.5rem)]">
         <button type="button" data-status="active" class="status-filter map-chip bg-brand-600 text-white">ต้องการความช่วย</button>
         <button type="button" data-status="all" class="status-filter map-chip bg-white/95 text-slate-700 border border-slate-200">ทั้งหมด</button>
         <button type="button" data-status="pending" class="status-filter map-chip bg-red-50 text-red-700 border border-red-200">รอช่วยเหลือ</button>

@@ -16,7 +16,11 @@ $types = array_values(array_filter((array)($n['need_types'] ?? [])));
 $people = (int)($n['people_count'] ?? 0);
 $desc = trim((string)($n['description'] ?? ''));
 ?>
-<div class="card overflow-hidden <?= $isCrit ? 'border-red-300' : '' ?>">
+<?php
+$hasLoc = !empty($n['lat']) && !empty($n['lng']);
+?>
+<div class="card overflow-hidden pool-card <?= $isCrit ? 'border-red-300' : '' ?>"
+     <?php if ($hasLoc): ?>data-lat="<?= (float)$n['lat'] ?>" data-lng="<?= (float)$n['lng'] ?>"<?php endif; ?>>
     <?php if ($isCrit): ?><div class="h-1.5 bg-red-500"></div><?php endif; ?>
 
     <a href="<?= Helper::url('volunteer/cases/' . (int)$n['id']) ?>" class="block p-3.5 pb-2">
@@ -34,6 +38,7 @@ $desc = trim((string)($n['description'] ?? ''));
                 <p class="text-sm text-slate-500 mt-1 flex items-center gap-x-2 gap-y-0.5 flex-wrap">
                     <?php if ($loc !== ''): ?><span class="inline-flex items-center gap-1">📍 <?= Helper::e($loc) ?></span><?php endif; ?>
                     <?php if ($people > 0): ?><span class="inline-flex items-center gap-1">👥 <?= $people ?> คน</span><?php endif; ?>
+                    <span class="near-dist hidden text-xs font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded"></span>
                     <span class="text-slate-400"><?= Helper::e($n['code']) ?> · <?= Helper::timeAgo($n['created_at']) ?></span>
                 </p>
             </div>

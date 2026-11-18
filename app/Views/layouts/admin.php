@@ -40,6 +40,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <?php endif; ?>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <style>
         * { -webkit-tap-highlight-color: transparent; }
@@ -256,7 +258,9 @@
     <aside id="sidebar" class="admin-sidebar flex flex-col">
         <!-- Logo/Brand -->
         <div class="sidebar-brand p-4 border-b border-slate-200 flex items-center gap-3">
-            <div class="sidebar-brand-logo w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 font-semibold text-sm">DR</div>
+            <div class="sidebar-brand-logo w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-water text-lg"></i>
+            </div>
             <div class="sidebar-brand-copy min-w-0">
                 <h1 class="font-semibold text-slate-800 leading-tight">Relief Admin</h1>
                 <p class="text-xs text-slate-500 truncate">Disaster Relief System</p>

@@ -315,7 +315,7 @@
     <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-[1002] safe-bottom">
         <div class="flex items-end justify-around h-[4.5rem] max-w-lg mx-auto px-1">
             <a href="<?= Helper::url() ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= ($title ?? '') === 'Deep South Care' ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <i class="fa-solid fa-water text-xl"></i>
                 <span>หน้าแรก</span>
             </a>
             <a href="<?= Helper::url('map') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 <?= str_contains($title ?? '', 'แผนที่') ? 'text-brand-600 font-medium' : 'text-slate-500' ?>">

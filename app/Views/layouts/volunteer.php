@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
     <style>
         * { -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Kanit', sans-serif; background: #f8fafc; color: #0f172a; }
@@ -71,6 +73,9 @@
             70% { box-shadow: 0 0 0 14px rgba(220,38,38,0); }
             100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
         }
+        /* Burger menu dropdown */
+        #userMenu { display: none; }
+        #userMenu.show { display: block; }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col">
@@ -120,16 +125,26 @@
     <header class="bg-white border-b border-slate-200 sticky top-0 z-[1001]">
         <div class="max-w-lg mx-auto px-4 h-14 flex items-center justify-between gap-3">
             <a href="<?= Helper::url('volunteer') ?>" class="flex items-center gap-2.5 min-w-0">
-                <div class="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 font-semibold text-xs">อาสา</div>
+                <div class="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-water text-lg"></i>
+                </div>
                 <div class="min-w-0">
                     <p class="font-semibold text-slate-800 leading-tight truncate">จิตอาสา</p>
                     <p class="text-xs text-slate-500 truncate">Deep South Care</p>
                 </div>
             </a>
-            <div class="flex items-center gap-3 text-sm shrink-0">
-                <span class="truncate max-w-[8rem] text-slate-600"><?= Helper::e($user['name'] ?? '') ?></span>
-                <a href="<?= Helper::url('password') ?>" class="text-slate-500 hover:text-slate-800 font-medium">เปลี่ยนรหัสผ่าน</a>
-                <a href="<?= Helper::url('logout') ?>" class="text-slate-500 hover:text-slate-800 font-medium">ออกจากระบบ</a>
+            <div class="flex items-center gap-3 text-sm shrink-0 relative">
+                <span class="truncate max-w-[8rem] text-slate-600 hidden sm:inline"><?= Helper::e($user['name'] ?? '') ?></span>
+                <button type="button" id="userMenuBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div id="userMenu" class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-[1002]">
+                    <div class="px-4 py-2 border-b border-slate-100">
+                        <p class="font-medium text-slate-800 truncate"><?= Helper::e($user['name'] ?? '') ?></p>
+                    </div>
+                    <a href="<?= Helper::url('password') ?>" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">เปลี่ยนรหัสผ่าน</a>
+                    <a href="<?= Helper::url('logout') ?>" class="block px-4 py-2 text-red-600 hover:bg-slate-50">ออกจากระบบ</a>
+                </div>
             </div>
         </div>
     </header>
@@ -155,10 +170,28 @@
             </div>
 
             <a href="<?= Helper::url() ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 text-slate-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <i class="fa-solid fa-water text-xl"></i>
                 <span>เว็บหลัก</span>
             </a>
         </div>
     </nav>
+
+    <script>
+        (function() {
+            const btn = document.getElementById('userMenuBtn');
+            const menu = document.getElementById('userMenu');
+            if (btn && menu) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menu.classList.toggle('show');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!menu.contains(e.target) && e.target !== btn) {
+                        menu.classList.remove('show');
+                    }
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

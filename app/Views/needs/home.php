@@ -9,7 +9,7 @@
     <!-- Hero -->
     <div class="pt-1 flex items-center gap-3">
         <div class="w-12 h-12 rounded-2xl bg-brand-600 flex items-center justify-center shrink-0 shadow-sm">
-            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <i class="fa-solid fa-water text-white text-2xl"></i>
         </div>
         <div>
             <h1 class="text-xl font-bold text-brand-800 leading-tight">ศูนย์ประสานงานช่วยเหลือน้ำท่วม</h1>
@@ -34,12 +34,12 @@
             <div id="homeMap" class="w-full" style="height:55dvh;min-height:300px"></div>
 
             <!-- Status filter chips -->
-            <div class="absolute top-2 right-2 z-[1001] flex gap-2 overflow-x-auto pb-1">
-                <button type="button" data-status="active" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white shadow">ต้องการความช่วย</button>
-                <button type="button" data-status="all" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-slate-700 shadow">ทั้งหมด</button>
-                <button type="button" data-status="pending" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-red-700 shadow">รอช่วยเหลือ</button>
-                <button type="button" data-status="in_progress" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-amber-700 shadow">กำลังช่วย</button>
-                <button type="button" data-status="completed" class="status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/95 text-emerald-700 shadow">สำเร็จแล้ว</button>
+            <div class="absolute top-2 right-2 z-[1001] flex gap-1.5 overflow-x-auto pb-1 max-w-[calc(100%-4.5rem)]">
+                <button type="button" data-status="active" class="status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-600 text-white shadow">ต้องการความช่วย</button>
+                <button type="button" data-status="all" class="status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-slate-700 shadow">ทั้งหมด</button>
+                <button type="button" data-status="pending" class="status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-red-700 shadow">รอช่วยเหลือ</button>
+                <button type="button" data-status="in_progress" class="status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-amber-700 shadow">กำลังช่วย</button>
+                <button type="button" data-status="completed" class="status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/95 text-emerald-700 shadow">สำเร็จแล้ว</button>
             </div>
 
             <!-- Legend -->
@@ -273,9 +273,9 @@ window.addEventListener('error', function(e) {
     document.querySelectorAll('.status-filter').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.status-filter').forEach(b => {
-                b.className = 'status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold shadow ' + (chipCls[b.dataset.status] || chipCls.all);
+                b.className = 'status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow ' + (chipCls[b.dataset.status] || chipCls.all);
             });
-            btn.className = 'status-filter shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white shadow';
+            btn.className = 'status-filter shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-600 text-white shadow';
             loadPoints(btn.dataset.status);
         });
     });

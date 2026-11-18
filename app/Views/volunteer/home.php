@@ -69,17 +69,27 @@ $isAvailable = $avail === 'available';
 
     <!-- Open pool -->
     <section id="open">
-        <h2 class="text-lg font-semibold text-slate-800 mb-2.5 flex items-center gap-2">
-            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4"/></svg>
-            เคสเปิดรับ
-            <span class="text-sm text-slate-400 font-normal">(<?= count($pool) ?>)</span>
-        </h2>
+        <div class="flex items-center justify-between gap-2 mb-2.5">
+            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4"/></svg>
+                เคสเปิดรับ
+                <span class="text-sm text-slate-400 font-normal" id="poolCount">(<?= count($pool) ?>)</span>
+            </h2>
+            <?php if ($pool): ?>
+            <button type="button" id="nearMeBtn"
+                    class="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-xl px-3.5 py-2.5 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span id="nearMeLabel">เคสใกล้ฉัน</span>
+            </button>
+            <?php endif; ?>
+        </div>
         <?php if (!$pool): ?>
             <div class="card p-5 text-center text-slate-400 text-base">ไม่มีเคสเปิดรับในขณะนี้ 🎉</div>
         <?php else: ?>
-            <div class="space-y-3">
+            <div class="space-y-3" id="poolList">
                 <?php foreach ($pool as $n): require APP_PATH . '/Views/volunteer/_pool_card.php'; endforeach; ?>
             </div>
+            <p id="nearMeNote" class="hidden mt-2 text-xs text-slate-400 text-center"></p>
         <?php endif; ?>
     </section>
 </div>
@@ -100,4 +110,68 @@ document.querySelectorAll('.claim-btn').forEach(btn => {
         await window.staffAction('/volunteer/cases/' + btn.dataset.id + '/claim', {});
     });
 });
+
+// "เคสใกล้ฉัน" — GPS sort by distance
+(function() {
+    const btn = document.getElementById('nearMeBtn');
+    if (!btn) return;
+    const label = document.getElementById('nearMeLabel');
+    const note = document.getElementById('nearMeNote');
+
+    function haversineKm(aLat, aLng, bLat, bLng) {
+        const R = 6371, rad = Math.PI / 180;
+        const dLat = (bLat - aLat) * rad, dLng = (bLng - aLng) * rad;
+        const s = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * rad) * Math.cos(bLat * rad) * Math.sin(dLng / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(s));
+    }
+    function fmtKm(km) {
+        return km < 1 ? Math.round(km * 1000) + ' ม.' : km.toFixed(1) + ' กม.';
+    }
+
+    btn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            Toast.show('อุปกรณ์ไม่รองรับ GPS', 'err');
+            return;
+        }
+        btn.disabled = true;
+        label.textContent = 'กำลังหา...';
+        navigator.geolocation.getCurrentPosition(pos => {
+            const myLat = pos.coords.latitude, myLng = pos.coords.longitude;
+            const list = document.getElementById('poolList');
+            const cards = Array.from(list.querySelectorAll('.pool-card'));
+            const withLoc = [], noLoc = [];
+
+            cards.forEach(c => {
+                const la = parseFloat(c.dataset.lat), ln = parseFloat(c.dataset.lng);
+                const badge = c.querySelector('.near-dist');
+                if (!isNaN(la) && !isNaN(ln)) {
+                    const d = haversineKm(myLat, myLng, la, ln);
+                    c.dataset.dist = d;
+                    if (badge) {
+                        badge.textContent = '≈ ' + fmtKm(d);
+                        badge.classList.remove('hidden');
+                    }
+                    withLoc.push(c);
+                } else {
+                    if (badge) badge.remove();
+                    noLoc.push(c);
+                }
+            });
+
+            withLoc.sort((a, b) => a.dataset.dist - b.dataset.dist);
+            [...withLoc, ...noLoc].forEach(c => list.appendChild(c));
+
+            const nearest = withLoc.length ? ' · ใกล้สุด ' + fmtKm(withLoc[0].dataset.dist) : '';
+            note.textContent = 'เรียงตามระยะทางจากตำแหน่งคุณ ' + withLoc.length + ' เคส' + nearest +
+                (noLoc.length ? ' · อีก ' + noLoc.length + ' เคสไม่มีพิกัด' : '');
+            note.classList.remove('hidden');
+            label.textContent = '✓ เรียงแล้ว';
+            btn.classList.add('bg-emerald-100', 'text-emerald-800', 'border-emerald-300');
+        }, () => {
+            Toast.show('ไม่สามารถระบุตำแหน่งได้ — ตรวจสอบว่าเปิด GPS', 'err');
+            btn.disabled = false;
+            label.textContent = 'เคสใกล้ฉัน';
+        }, { timeout: 10000, maximumAge: 60000 });
+    });
+})();
 </script>
