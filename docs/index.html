@@ -103,6 +103,19 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:6
 .tech-item small{color:var(--mut);font-size:13px;line-height:1.45;display:block;margin-top:2px}
 @media(max-width:760px){.tech-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:480px){.tech-grid{grid-template-columns:1fr}}
+/* capacity */
+.cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:920px;margin:0 auto 34px}
+.cap-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 24px;text-align:center;transition:.2s}
+.cap-card:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(15,23,42,.09);border-color:#cbd5e1}
+.cap-num{font-size:clamp(30px,4vw,42px);font-weight:800;color:var(--blue);line-height:1.1}
+.cap-unit{font-weight:600;font-size:15px;color:var(--ink);margin:6px 0 10px}
+.cap-card p{font-size:13.5px;color:var(--mut);line-height:1.55}
+.cap-env{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:920px;margin:0 auto}
+.cap-env-item{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.cap-env-item b{display:block;font-size:14.5px;margin-bottom:4px}
+.cap-env-item span{font-size:13.5px;color:var(--mut);line-height:1.5}
+.cap-note{text-align:center;margin-top:30px;font-size:13.5px;color:var(--mut)}
+@media(max-width:760px){.cap-grid,.cap-env{grid-template-columns:1fr}}
 /* install */
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:s}
 .step{position:relative;padding:22px 18px 18px;background:#fff;border:1px solid var(--line);border-radius:16px}
@@ -276,7 +289,24 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
       <div class="tech-item"><div class="tic" style="background:#fef2f2;color:#dc2626"><i class="fa-brands fa-js"></i></div><div><b>Vanilla JS</b><small>ไม่ต้อง build tool ใช้ได้ทันที</small></div></div>
     </div>
   </div>
-    <p style="text-align:center;margin-top:26px;font-size:14px;color:var(--mut)">ทดสอบโหลดจริงบน Apache + PHP + SQLite: <b>~400–500 requests/วินาที</b> ที่ ~64 concurrent connections — <a href="https://github.com/nasmees/Dlite/blob/main/PERFORMANCE.md">ดูรายงานฉบับเต็ม</a></p>
+    </section>
+
+<section style="padding-top:56px">
+  <div class="wrap">
+    <h2>รองรับผู้ใช้ได้แค่ไหน?</h2>
+    <p class="sub">สรุปจากการทดสอบโหลดจริงบน Apache + PHP + SQLite — ตัวเลขที่วัดได้จริง ไม่ใช่การคาดเดา</p>
+    <div class="cap-grid">
+      <div class="cap-card"><div class="cap-num">~400–500</div><div class="cap-unit">requests / วินาที</div><p>อัตราการตอบสนองที่วัดได้จริงในช่วงโหลดปกติ</p></div>
+      <div class="cap-card"><div class="cap-num">~64</div><div class="cap-unit">การเชื่อมต่อพร้อมกัน</div><p>เพดานของ Apache บนเครื่อง local — ข้อจำกัดอยู่ที่เว็บเซิร์ฟเวอร์ ไม่ใช่ตัวแอป</p></div>
+      <div class="cap-card"><div class="cap-num">1,500–3,000</div><div class="cap-unit">คนออนไลน์พร้อมกัน</div><p>ประมาณการจากพฤติกรรมผู้ใช้จริง (1 คน ≈ 1 request ทุก 2–5 วินาที)</p></div>
+    </div>
+    <div class="cap-env">
+      <div class="cap-env-item"><b>เซิร์ฟเวอร์ของคุณเอง</b><span>เหมาะกับพื้นที่/อำเภอ — ปรับ Apache หรือ nginx+php-fpm ได้ตามต้องการ ความจุจะสูงขึ้นอีก</span></div>
+      <div class="cap-env-item"><b>Shared hosting ทั่วไป</b><span>ประมาณ 50–200 คนออนไลน์พร้อมกัน — เพียงพอสำหรับงานบรรเทาระดับตำบล/อำเภอ</span></div>
+      <div class="cap-env-item"><b>ต้องการมากกว่านี้</b><span>ย้ายฐานข้อมูลเป็น MySQL/PostgreSQL และวางระบบหลัง reverse proxy เพื่อรองรับ traffic ระดับจังหวัด</span></div>
+    </div>
+    <p class="cap-note">ตัวเลขอ้างอิงจาก <a href="https://github.com/nasmees/Dlite/blob/main/PERFORMANCE.md">รายงานทดสอบโหลดฉบับเต็มใน repo</a> — ผลจริงขึ้นกับสเปกเครื่อง เซิร์ฟเวอร์ และ network ของคุณ</p>
+  </div>
 </section>
 
 <section id="install" style="background:var(--bg)">
