@@ -1,65 +1,108 @@
 <?php
 /**
- * Volunteer dashboard — my cases + open pool.
+ * Volunteer dashboard — demo-style: profile header, stat grid,
+ * my cases with quick actions, open pool.
  * Expects: $user, $profile, $stats, $mineActive, $mineDone, $pool,
  *          $statusLabels, $urgencyLabels, $scenarioLabels, $needTypes, $csrf
  */
 $avail = $profile['availability'] ?? 'available';
 $isAvailable = $avail === 'available';
+$initial = mb_substr(trim($user['name'] ?? 'อ'), 0, 1);
+$poolCount = count($pool);
+$statCards = [
+    ['label' => 'เคสที่ดูแล',   'num' => (int)$stats['active'],     'icon' => 'fa-clipboard-list', 'chip' => 'bg-blue-50 text-blue-600',    'numCls' => 'text-blue-600'],
+    ['label' => 'กำลังช่วย',     'num' => (int)$stats['working'],    'icon' => 'fa-person-running', 'chip' => 'bg-amber-50 text-amber-600',  'numCls' => 'text-amber-600'],
+    ['label' => 'เสร็จวันนี้',    'num' => (int)$stats['done_today'], 'icon' => 'fa-circle-check',   'chip' => 'bg-emerald-50 text-emerald-600','numCls' => 'text-emerald-600'],
+    ['label' => 'เคสเปิดรับ',    'num' => $poolCount,                'icon' => 'fa-inbox',          'chip' => 'bg-violet-50 text-violet-600','numCls' => 'text-violet-600'],
+];
+$nextStatusMap = ['pending' => 'accepted', 'accepted' => 'in_progress', 'in_progress' => 'completed'];
+$nextStatusLabel = ['accepted' => 'รับเรื่อง', 'in_progress' => 'เริ่มดำเนินการ', 'completed' => 'เสร็จสิ้น'];
 ?>
 <div class="space-y-5">
 
-    <!-- Page header (admin style) -->
-    <div>
-        <h1 class="text-2xl font-semibold text-slate-800 flex items-center gap-2.5">
-            <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            งานอาสาสมัคร
-        </h1>
-        <p class="text-slate-500 mt-1">จัดการเคสที่ได้รับมอบหมายและรับเคสจากกองรวม</p>
-    </div>
-
-    <!-- Availability toggle -->
-    <div class="card p-4 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-            <span class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 <?= $isAvailable ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500' ?>">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </span>
-            <div class="min-w-0">
-                <p class="text-base font-bold text-slate-800"><?= $isAvailable ? 'ว่างรับงาน' : 'ไม่ว่าง' ?></p>
-                <p class="text-sm text-slate-500"><?= $isAvailable ? 'พร้อมรับเคสใหม่' : 'พักจากการรับเคส' ?></p>
-            </div>
+    <!-- Profile header -->
+    <div class="card p-4 flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xl font-bold shrink-0"><?= Helper::e($initial) ?></div>
+        <div class="flex-1 min-w-0">
+            <p class="font-bold text-slate-800 truncate"><?= Helper::e($user['name'] ?? '') ?></p>
+            <p class="text-sm <?= $isAvailable ? 'text-emerald-600' : 'text-slate-400' ?>"><?= $isAvailable ? 'พร้อมรับงาน' : 'พักจากการรับเคส' ?></p>
         </div>
         <button type="button" id="availToggle" data-avail="<?= $isAvailable ? 'busy' : 'available' ?>"
-                class="shrink-0 text-base font-bold rounded-xl px-5 py-3 transition <?= $isAvailable ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700' ?>">
+                class="shrink-0 text-sm font-bold rounded-xl px-4 py-2.5 transition <?= $isAvailable ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700' ?>">
             <?= $isAvailable ? 'พัก' : 'กลับมารับงาน' ?>
         </button>
     </div>
 
-    <!-- Stats (admin chips) -->
-    <div class="flex flex-wrap gap-2">
-        <div class="admin-stat"><span class="num"><?= (int)$stats['active'] ?></span><span class="lbl">เคสที่ดูแล</span></div>
-        <div class="admin-stat"><span class="num"><?= (int)$stats['working'] ?></span><span class="lbl">กำลังช่วย</span></div>
-        <div class="admin-stat"><span class="num"><?= (int)$stats['done_today'] ?></span><span class="lbl">เสร็จวันนี้</span></div>
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-3">
+        <?php foreach ($statCards as $sc): ?>
+        <div class="card p-4 flex items-center gap-3">
+            <span class="w-11 h-11 rounded-xl <?= $sc['chip'] ?> flex items-center justify-center shrink-0"><i class="fa-solid <?= $sc['icon'] ?> text-lg"></i></span>
+            <span class="min-w-0">
+                <span class="block font-extrabold text-2xl <?= $sc['numCls'] ?> leading-none"><?= $sc['num'] ?></span>
+                <span class="block text-xs text-slate-500 mt-0.5"><?= Helper::e($sc['label']) ?></span>
+            </span>
+        </div>
+        <?php endforeach; ?>
     </div>
 
     <!-- My active cases -->
     <section id="mine">
-        <h2 class="text-lg font-semibold text-slate-800 mb-2.5 flex items-center gap-2">
-            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            งานของฉัน
+        <h2 class="text-base font-semibold text-slate-800 mb-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-list text-brand-600"></i> เคสของฉัน
             <?php if ($mineActive): ?><span class="text-sm text-slate-400 font-normal">(<?= count($mineActive) ?>)</span><?php endif; ?>
         </h2>
         <?php if (!$mineActive): ?>
-            <div class="card p-5 text-center text-slate-400 text-base">ยังไม่มีเคสที่รับผิดชอบ — เลือกรับจากเคสเปิดรับด้านล่าง</div>
+            <div class="card p-5 text-center text-slate-400">ยังไม่มีเคสที่รับผิดชอบ — เลือกรับจากคลังงานด้านล่าง</div>
         <?php else: ?>
-            <div class="space-y-2">
-                <?php foreach ($mineActive as $n): $showClaim = false; require APP_PATH . '/Views/volunteer/_case_row.php'; endforeach; ?>
+            <div class="space-y-3">
+                <?php foreach ($mineActive as $n):
+                    $scenarioKey = $n['scenario'] ?? 'other';
+                    $chip = Helper::scenarioChipColor($scenarioKey);
+                    $icon = Helper::scenarioIcon($scenarioKey, 'w-6 h-6');
+                    $title = Helper::scenarioLabel($scenarioKey) ?: 'เหตุการณ์';
+                    $place = ($n['district'] ?? '') !== '' ? $n['district'] : ($n['area_name'] ?? '');
+                    $loc = implode(' · ', array_values(array_unique(array_filter([$place, $n['province'] ?? '']))));
+                    $people = (int)($n['people_count'] ?? 0);
+                    $next = $nextStatusMap[$n['status']] ?? null;
+                ?>
+                <div class="card p-4">
+                    <a href="<?= Helper::url('volunteer/cases/' . (int)$n['id']) ?>" class="flex items-start gap-3">
+                        <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 <?= $chip ?>"><?= $icon ?></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="font-bold text-slate-800 leading-tight"><?= Helper::e($title) ?></p>
+                                <?php if (($n['urgency'] ?? 'normal') !== 'normal'): ?>
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold <?= Helper::urgencyChipColor($n['urgency']) ?>"><?= Helper::e($urgencyLabels[$n['urgency']] ?? $n['urgency']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <p class="text-sm text-slate-500 mt-1">
+                                <?= Helper::e($n['code']) ?><?= $loc !== '' ? ' · ' . Helper::e($loc) : '' ?><?= $people > 0 ? ' · ~' . $people . ' คน' : '' ?> · <?= Helper::timeAgo($n['created_at']) ?>
+                            </p>
+                        </div>
+                        <span class="shrink-0 inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold <?= Helper::statusColor($n['status']) ?>">
+                            <?= Helper::statusDot($n['status']) ?><?= Helper::e($statusLabels[$n['status']] ?? $n['status']) ?>
+                        </span>
+                    </a>
+                    <div class="flex gap-2 mt-3">
+                        <?php if ($next): ?>
+                        <button type="button" class="quick-status flex-1 text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl py-2.5 transition"
+                                data-id="<?= (int)$n['id'] ?>" data-status="<?= $next ?>">
+                            <i class="fa-solid <?= $next === 'completed' ? 'fa-flag-checkered' : ($next === 'in_progress' ? 'fa-person-running' : 'fa-check') ?> mr-1"></i><?= Helper::e($nextStatusLabel[$next]) ?>
+                        </button>
+                        <?php endif; ?>
+                        <a href="<?= Helper::url('volunteer/cases/' . (int)$n['id']) ?>" class="flex-1 text-sm font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-xl py-2.5 text-center transition">
+                            <i class="fa-solid fa-camera mr-1"></i> อัปเดตหน้างาน
+                        </a>
+                    </div>
+                </div>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
 
         <?php if ($mineDone): ?>
             <details class="mt-3">
-                <summary class="text-base font-semibold text-slate-500 cursor-pointer py-2">เคสที่เสร็จ/ยกเลิก (<?= count($mineDone) ?>)</summary>
+                <summary class="text-sm font-semibold text-slate-500 cursor-pointer py-2">เคสที่เสร็จ/ยกเลิก (<?= count($mineDone) ?>)</summary>
                 <div class="space-y-2 mt-2">
                     <?php foreach ($mineDone as $n): $showClaim = false; require APP_PATH . '/Views/volunteer/_case_row.php'; endforeach; ?>
                 </div>
@@ -70,21 +113,20 @@ $isAvailable = $avail === 'available';
     <!-- Open pool -->
     <section id="open">
         <div class="flex items-center justify-between gap-2 mb-2.5">
-            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4"/></svg>
-                เคสเปิดรับ
-                <span class="text-sm text-slate-400 font-normal" id="poolCount">(<?= count($pool) ?>)</span>
+            <h2 class="text-base font-semibold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-hand-holding-hand text-emerald-600"></i> คลังงานที่รอรับ
+                <span class="text-sm text-slate-400 font-normal" id="poolCount">(<?= $poolCount ?>)</span>
             </h2>
             <?php if ($pool): ?>
             <button type="button" id="nearMeBtn"
-                    class="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-xl px-3.5 py-2.5 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    class="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-xl px-3.5 py-2 transition">
+                <i class="fa-solid fa-location-dot"></i>
                 <span id="nearMeLabel">เคสใกล้ฉัน</span>
             </button>
             <?php endif; ?>
         </div>
         <?php if (!$pool): ?>
-            <div class="card p-5 text-center text-slate-400 text-base">ไม่มีเคสเปิดรับในขณะนี้ 🎉</div>
+            <div class="card p-5 text-center text-slate-400">ไม่มีเคสเปิดรับในขณะนี้</div>
         <?php else: ?>
             <div class="space-y-3" id="poolList">
                 <?php foreach ($pool as $n): require APP_PATH . '/Views/volunteer/_pool_card.php'; endforeach; ?>
@@ -108,6 +150,23 @@ document.querySelectorAll('.claim-btn').forEach(btn => {
         btn.disabled = true;
         btn.textContent = '...';
         await window.staffAction('/volunteer/cases/' + btn.dataset.id + '/claim', {});
+    });
+});
+
+document.querySelectorAll('.quick-status').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        const old = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>กำลังส่ง…';
+        const json = await window.staffAction('/volunteer/cases/' + btn.dataset.id + '/status',
+            { status: btn.dataset.status }, { reload: false });
+        if (json && json.ok) {
+            // move to next stage without full reload for snappier feel
+            setTimeout(() => location.reload(), 500);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
     });
 });
 
