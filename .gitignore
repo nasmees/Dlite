@@ -1,0 +1,13 @@
+# Database & runtime data — NEVER commit
+storage/*
+!storage/.htaccess
+uploads/*
+!uploads/.htaccess
+
+# Source screenshots (already copied to landing/assets/)
+landing/รูป/
+
+# OS / editor
+Thumbs.db
+Desktop.ini
+*.log
