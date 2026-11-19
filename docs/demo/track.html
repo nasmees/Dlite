@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ติดตามสถานะ — Dlite Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/demo.css">
+</head>
+<body>
+<div id="demoBanner"></div>
+<div class="wrap" style="padding-top:16px">
+
+  <h1 style="font-size:20px;font-weight:800;margin-bottom:4px"><i class="fa-solid fa-magnifying-glass" style="color:var(--brand2)"></i> ติดตามสถานะ</h1>
+  <p class="muted" style="margin-bottom:16px">กรอกรหัสเคส (เช่น DL-2601) หรือเบอร์โทรที่ใช้แจ้ง</p>
+
+  <div class="card" style="padding:14px;display:flex;gap:10px">
+    <input class="input" id="q" placeholder="DL-2601" style="flex:1">
+    <button class="btn btn-p" id="btnGo" style="padding:12px 18px"><i class="fa-solid fa-arrow-right"></i></button>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px" id="quickCodes"></div>
+
+  <div id="result" style="margin-top:16px"></div>
+</div>
+<div id="navSlot"></div>
+<div id="toast"></div>
+
+<script src="assets/demo.js"></script>
+<script>
+const D = window.DEMO;
+document.getElementById('demoBanner').innerHTML = D.demoBanner();
+document.getElementById('navSlot').innerHTML = D.bottomNav('track');
+
+// quick-pick demo codes
+document.getElementById('quickCodes').innerHTML = D.CASES.map(c =>
+  `<button class="fchip" style="position:static;box-shadow:none;border:1px solid var(--line)" data-c="${c.code}">${c.code}</button>`).join('');
+document.querySelectorAll('#quickCodes .fchip').forEach(b => b.addEventListener('click', () => {
+  document.getElementById('q').value = b.dataset.c;
+  show(b.dataset.c);
+}));
+
+function show(code) {
+  const c = D.caseByCode(code);
+  const el = document.getElementById('result');
+  if (!c) {
+    el.innerHTML = `<div class="card" style="padding:24px;text-align:center">
+      <i class="fa-solid fa-circle-question" style="font-size:30px;color:#94a3b8"></i>
+      <p class="muted" style="margin-top:8px">ไม่พบรหัสเคสนี้ — ลองรหัสจากปุ่มด้านบน (DL-2600 ถึง DL-2605)</p></div>`;
+    return;
+  }
+  el.innerHTML = D.caseDetail(c);
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+document.getElementById('btnGo').addEventListener('click', () => show(document.getElementById('q').value));
+document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') show(e.target.value); });
+
+// ?code=DL-xxxx deep link
+const q = new URLSearchParams(location.search).get('code');
+if (q) { document.getElementById('q').value = q; show(q); }
+</script>
+</body>
+</html>

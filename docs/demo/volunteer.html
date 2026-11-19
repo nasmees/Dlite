@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>งานอาสา — Dlite Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/demo.css">
+<style>
+.pool-card{padding:14px}
+.pool-card .acts{display:flex;gap:8px;margin-top:10px}
+.pool-card .acts .btn{flex:1;padding:9px 10px;font-size:13px;border-radius:10px}
+.mine-card{padding:14px}
+.mine-card .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.mine-card .acts .btn{padding:8px 14px;font-size:13px;border-radius:10px}
+</style>
+</head>
+<body>
+<div id="demoBanner"></div>
+<div class="wrap" style="padding-top:16px">
+
+  <!-- header -->
+  <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
+    <div style="width:46px;height:46px;border-radius:50%;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700">อ</div>
+    <div style="flex:1">
+      <b style="font-size:16px">อาสาสมัคร ตัวอย่าง</b>
+      <p class="muted">พร้อมรับงาน · นราธิวาส</p>
+    </div>
+    <button class="btn btn-ghost" id="btnAvail" style="padding:8px 12px;font-size:13px"><i class="fa-solid fa-toggle-on" style="color:var(--green)"></i> พร้อมงาน</button>
+  </div>
+
+  <!-- stats -->
+  <div class="sec-title"><i class="fa-solid fa-chart-simple"></i> ภาพรวมของฉัน</div>
+  <div class="stat-grid">
+    <div class="card stat"><span class="sic" style="background:#eff6ff;color:#2563eb"><i class="fa-solid fa-inbox"></i></span><span><b id="stPool" style="color:#2563eb">0</b><span>เคสในคลัง</span></span></div>
+    <div class="card stat"><span class="sic" style="background:#fffbeb;color:#d97706"><i class="fa-solid fa-person-walking"></i></span><span><b id="stMine" style="color:#d97706">0</b><span>เคสของฉัน</span></span></div>
+    <div class="card stat"><span class="sic" style="background:#ecfdf5;color:#059669"><i class="fa-solid fa-circle-check"></i></span><span><b id="stDone" style="color:#059669">0</b><span>เสร็จสิ้น</span></span></div>
+    <div class="card stat"><span class="sic" style="background:#f5f3ff;color:#7c3aed"><i class="fa-solid fa-star"></i></span><span><b style="color:#7c3aed">4.9</b><span>คะแนนอาสา</span></span></div>
+  </div>
+
+  <!-- my cases -->
+  <div class="sec-title"><i class="fa-solid fa-clipboard-list"></i> เคสของฉัน<a class="more-link" href="#">ดูทั้งหมด →</a></div>
+  <div id="mineList" style="display:grid;gap:10px"></div>
+
+  <!-- pool -->
+  <div class="sec-title"><i class="fa-solid fa-hand-holding-hand"></i> คลังงานที่รอรับ</div>
+  <div id="poolList" style="display:grid;gap:10px"></div>
+
+  <p class="muted" style="text-align:center;margin:26px 0 8px">— สิ้นสุดเดโม —</p>
+</div>
+<div id="navSlot"></div>
+<div id="toast"></div>
+
+<script src="assets/demo.js"></script>
+<script>
+const D = window.DEMO;
+document.getElementById('demoBanner').innerHTML = D.demoBanner();
+document.getElementById('navSlot').innerHTML = D.bottomNav('');
+
+// in-memory state: which cases the demo volunteer claimed
+const claimed = new Set([2]);           // DL-2602 already mine (in_progress)
+let done = new Set();                   // completed via demo actions
+const statusOverride = {};              // id -> status
+
+function effStatus(c) {
+  if (done.has(c.id)) return 'completed';
+  return statusOverride[c.id] || c.status;
+}
+function poolCases() { return D.CASES.filter(c => !claimed.has(c.id) && !done.has(c.id) && ['pending','accepted'].includes(c.status)); }
+function mineCases()    { return D.CASES.filter(c => claimed.has(c.id) && !done.has(c.id)); }
+function doneCases()    { return D.CASES.filter(c => done.has(c.id)); }
+
+function nextAction(c) {
+  const s = effStatus(c);
+  if (s === 'accepted') return { label: 'เริ่มเดินทาง', to: 'in_progress', icon: 'fa-person-walking' };
+  if (s === 'in_progress') return { label: 'เสร็จสิ้น', to: 'completed', icon: 'fa-flag-checkered' };
+  return null;
+}
+
+function render() {
+  document.getElementById('stPool').textContent = poolCases().length;
+  document.getElementById('stMine').textContent = mineCases().length;
+  document.getElementById('stDone').textContent = doneCases().length;
+
+  document.getElementById('poolList').innerHTML = poolCases().length
+    ? poolCases().map(c => `
+      <div class="card pool-card">
+        <div style="display:flex;gap:12px;align-items:center">
+          ${D.scenarioChip(c.scenario)}
+          <div class="case-t" style="flex:1">
+            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+              <b>${D.esc(c.title)}</b>${D.urgencyPill(c.urgency)}
+            </div>
+            <small>${D.esc(c.place)} · ~${c.people} คน · ${D.esc(c.time)}</small>
+          </div>
+          ${D.statusPill(c.status)}
+        </div>
+        <div class="acts">
+          <button class="btn btn-p pool-claim" data-id="${c.id}" style="background:#059669"><i class="fa-solid fa-hand-holding-hand"></i> รับเคสนี้</button>
+          <a class="btn btn-ghost" href="track.html?code=${c.code}" style="flex:1.4"><i class="fa-solid fa-eye"></i> ดูรายละเอียด</a>
+        </div>
+      </div>`).join('')
+    : '<div class="card" style="padding:22px;text-align:center"><p class="muted">ไม่มีเคสใหม่ในขณะนี้</p></div>';
+
+  const mine = [...mineCases(), ...doneCases()];
+  document.getElementById('mineList').innerHTML = mine.length
+    ? mine.map(c => {
+        const s = effStatus(c);
+        const act = done.has(c.id) ? null : nextAction(c);
+        return `
+        <div class="card mine-card">
+          <div style="display:flex;gap:12px;align-items:center">
+            ${D.scenarioChip(c.scenario)}
+            <div class="case-t" style="flex:1">
+              <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+                <b>${D.esc(c.title)}</b>${D.statusPill(done.has(c.id) ? 'completed' : s)}
+              </div>
+              <small>${D.esc(c.code)} · ${D.esc(c.place)} · ~${c.people} คน</small>
+            </div>
+          </div>
+          ${act ? `<div class="acts">
+            <button class="btn" data-act="${act.to}" data-id="${c.id}" style="background:var(--brand2);color:#fff;flex:1"><i class="fa-solid ${act.icon}"></i> ${act.label}</button>
+            <button class="btn btn-ghost" data-act="update" data-id="${c.id}" style="flex:1"><i class="fa-solid fa-camera"></i> อัปเดตหน้างาน</button>
+          </div>` : `<div class="acts"><span class="pill st-completed" style="margin-top:10px"><i class="fa-solid fa-circle-check"></i> ปิดเคสแล้ว</span></div>`}
+        </div>`;
+      }).join('')
+    : '<div class="card" style="padding:22px;text-align:center"><p class="muted">ยังไม่มีเคส — รับเคสจากคลังด้านล่างได้เลย</p></div>';
+
+  document.querySelectorAll('.pool-claim').forEach(b => b.addEventListener('click', () => {
+    claimed.add(+b.dataset.id);
+    D.toast('รับเคสสำเร็จ (เดโม)');
+    render();
+  }));
+  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+    const id = +b.dataset.id, act = b.dataset.act;
+    if (act === 'update') { D.toast('เดโม: อัปเดตสถานะ + แนบรูปได้ในระบบจริง', 3000); return; }
+    if (act === 'completed') { done.add(id); D.toast('ปิดเคสเรียบร้อย — ขอบคุณที่ช่วยเหลือ!', 3000); }
+    else { statusOverride[id] = act; D.toast('อัปเดตสถานะเคสแล้ว (เดโม)', 2000); }
+    render();
+  }));
+}
+render();
+</script>
+</body>
+</html>
