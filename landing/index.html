@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dlite — ระบบประสานงานช่วยเหลือและบรรเทาทุกข์</title>
+<meta name="description" content="Dlite ระบบบริหารจัดการงานช่วยเหลืออาสาสมัครและประชาชน รองรับโหมดภัยพิบัติและงานบรรเทาทั่วไป ติดตั้งง่าย ใช้ SQLite ไม่ต้องมี server แยก">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+:root{
+  --blue:#004c97; --blue-d:#003a78; --sky:#0ea5e9; --emerald:#059669;
+  --ink:#0f172a; --mut:#475569; --line:#e2e8f0; --bg:#f8fafc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Kanit',sans-serif;color:var(--ink);background:#fff;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+a{color:var(--blue);text-decoration:none}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;border-radius:12px;font-weight:600;font-size:16px;transition:.2s;border:none;cursor:pointer}
+.btn-p{background:var(--blue);color:#fff}
+.btn-p:hover{background:var(--blue-d);transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,76,151,.25)}
+.btn-g{background:#fff;color:var(--blue);border:2px solid var(--line)}
+.btn-g:hover{border-color:var(--blue)}
+.eyebrow{display:inline-block;background:#e0f2fe;color:var(--blue);font-size:13px;font-weight:600;padding:5px 14px;border-radius:999px;margin-bottom:14px}
+h1{font-size:clamp(30px,5vw,52px);font-weight:800;line-height:1.2}
+h2{font-size:clamp(24px,3.5vw,34px);font-weight:700;text-align:center;margin-bottom:10px}
+.sub{color:var(--mut);text-align:center;max-width:640px;margin:0 auto 48px;font-size:17px}
+section{padding:80px 0}
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--ink)}
+.brand .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--sky));display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.navlinks{display:flex;gap:26px;align-items:center}
+.navlinks a{color:var(--mut);font-weight:500;font-size:15px}
+.navlinks a:hover{color:var(--blue)}
+.navlinks a.btn{color:#fff}
+.navlinks a.btn:hover{color:#fff}
+@media(max-width:760px){.navlinks a.hide-m{display:none}}
+/* hero */
+.hero{background:linear-gradient(160deg,#f0f7ff 0%,#fff 55%,#ecfdf5 100%);padding:90px 0 100px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-140px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(14,165,233,.15),transparent 70%)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hero p.lead{color:var(--mut);font-size:18px;margin:18px 0 30px;max-width:520px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero-badges{display:flex;gap:20px;margin-top:34px;flex-wrap:wrap}
+.hero-badges span{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--mut)}
+.hero-badges i{color:var(--emerald);font-style:normal}
+/* mockup */
+.mock{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 60px rgba(15,23,42,.12);overflow:hidden}
+.mock-bar{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line);background:#f8fafc}
+.mock-bar i{width:11px;height:11px;border-radius:50%;display:block}
+.mock-body{padding:20px;display:grid;gap:12px}
+.mrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px}
+.mrow .dot{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+.mrow .t{flex:1}
+.mrow .t b{display:block;font-size:14px}
+.mrow .t small{color:var(--mut);font-size:12px}
+.mrow .pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.mock{animation:float 6s ease-in-out infinite}
+/* cards */
+.grid{display:grid;gap:22px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;transition:.25s}
+.card:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(15,23,42,.09);border-color:#cbd5e1}
+.card .ic{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.card h3{font-size:17px;font-weight:600;margin-bottom:6px}
+.card p{color:var(--mut);font-size:14.5px}
+@media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+@media(max-width:560px){.g3,.g4,.g2{grid-template-columns:1fr}.hero-grid{grid-template-columns:1fr}}
+/* modes */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.mode{border-radius:20px;padding:30px;border:1px solid var(--line);position:relative;overflow:hidden;display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:center}
+.mode .mode-img img{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line);box-shadow:0 12px 30px rgba(15,23,42,.12)}
+.mode .mode-txt{min-width:0}
+@media(max-width:760px){.mode{grid-template-columns:1fr}}
+.mode.d{background:linear-gradient(150deg,#fff 60%,#fef2f2)}
+.mode.r{background:linear-gradient(150deg,#fff 60%,#ecfdf5)}
+.mode h3{font-size:20px;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.mode ul{list-style:none;margin-top:14px}
+.mode li{padding:7px 0 7px 26px;position:relative;color:var(--mut);font-size:15px}
+.mode li::before{content:'\f00c';font-family:'Font Awesome 6 Free';font-weight:900;position:absolute;left:4px;color:var(--emerald);font-size:13px}
+@media(max-width:760px){.modes{grid-template-columns:1fr}}
+/* roles */
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.role{background:var(--bg);border-radius:16px;padding:24px;border:1px solid var(--line)}
+.role .who{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.role ul{list-style:none}
+.role li{font-size:14px;color:var(--mut);padding:5px 0 5px 18px;position:relative}
+.role li::before{content:'\2022';position:absolute;left:4px;color:var(--sky);font-weight:800}
+@media(max-width:760px){.roles{grid-template-columns:1fr}}
+/* tech */
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:920px;margin:0 auto}
+.tech-item{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;transition:.2s}
+.tech-item:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(15,23,42,.08);border-color:#cbd5e1}
+.tech-item .tic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.tech-item b{display:block;font-size:15px}
+.tech-item small{color:var(--mut);font-size:13px;line-height:1.45;display:block;margin-top:2px}
+@media(max-width:760px){.tech-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.tech-grid{grid-template-columns:1fr}}
+/* install */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:s}
+.step{position:relative;padding:22px 18px 18px;background:#fff;border:1px solid var(--line);border-radius:16px}
+.step::before{counter-increment:s;content:counter(s);position:absolute;top:-14px;left:18px;width:30px;height:30px;border-radius:9px;background:var(--blue);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+.step h4{font-size:15px;margin:6px 0 6px}
+.step p,.step code{font-size:13px;color:var(--mut)}
+.step code{display:block;background:#f1f5f9;border-radius:8px;padding:8px 10px;margin-top:8px;font-family:Consolas,monospace;color:var(--blue-d);overflow-x:auto;white-space:nowrap}
+@media(max-width:900px){.steps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.steps{grid-template-columns:1fr}}
+/* shots */
+.shot{margin:0;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 14px 34px rgba(15,23,42,.08)}
+.shot img{width:100%;height:auto;display:block}
+.shot figcaption{padding:12px 16px;font-size:13.5px;color:var(--mut);text-align:center;border-top:1px solid var(--line);background:#f8fafc}
+.shot-wide{margin-bottom:22px}
+.shots-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,300px));gap:20px;justify-content:center}
+@media(max-width:760px){.shots-grid{grid-template-columns:1fr}}
+/* cta */
+.cta{background:linear-gradient(135deg,var(--blue),#0369a1);color:#fff;text-align:center;border-radius:26px;padding:64px 30px}
+.cta h2{color:#fff;margin-bottom:12px}
+.cta p{color:#dbeafe;margin-bottom:30px;font-size:17px}
+.cta .btn-w{background:#fff;color:var(--blue)}
+.cta .btn-w:hover{background:#e0f2fe}
+footer{border-top:1px solid var(--line);padding:34px 0;color:var(--mut);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="logo"><i class="fa-solid fa-water"></i></span>Dlite</a>
+    <div class="navlinks">
+      <a href="#features" class="hide-m">ฟีเจอร์</a>
+      <a href="#screenshots" class="hide-m">ตัวอย่าง</a>
+      <a href="#modes" class="hide-m">โหมดการทำงาน</a>
+      <a href="#roles" class="hide-m">บทบาท</a>
+      <a href="#install" class="hide-m">การติดตั้ง</a>
+      <a class="btn btn-p" style="padding:9px 20px;font-size:14px" href="https://github.com">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">ระบบบริหารจัดการงานช่วยเหลือ</span>
+      <h1>ประสานงานช่วยเหลือ<br>ได้ทันที ทุกเหตุการณ์</h1>
+      <p class="lead">Dlite คือระบบกลางสำหรับรับเรื่อง แจ้งเหตุ และบริหารจัดการอาสาสมัคร รองรับทั้งงานภัยพิบัติ/น้ำท่วม และงานบรรเทาทุกข์ทั่วไป — ใช้งานผ่านมือถือได้ทันที ไม่ต้องติดตั้ง</p>
+      <div class="hero-cta">
+        <a class="btn btn-p" href="https://github.com"><i class="fa-brands fa-github"></i> ดูโปรเจกต์บน GitHub</a>
+        <a class="btn btn-g" href="#install">วิธีติดตั้ง</a>
+      </div>
+      <div class="hero-badges">
+        <span><i class="fa-solid fa-circle-check"></i> ใช้งานได้ทันที ไม่ต้องติดตั้ง</span>
+        <span><i class="fa-solid fa-circle-check"></i> รองรับมือถือ 100%</span>
+        <span><i class="fa-solid fa-circle-check"></i> ข้อมูลอยู่กับคุณ (SQLite)</span>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="mock-bar"><i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i></div>
+      <div class="mock-body">
+        <div class="mrow"><div class="dot" style="background:var(--blue)"><i class="fa-solid fa-house-flood-water"></i></div><div class="t"><b>น้ำท่วมหนัก ต.เขาตูม</b><small>10 คนติดอยู่ในบ้าน ยก 2</small></div><span class="pill" style="background:#fef2f2;color:#dc2626">วิกฤต</span></div>
+        <div class="mrow"><div class="dot" style="background:var(--emerald)"><i class="fa-solid fa-truck-medical"></i></div><div class="t"><b>ต้องการรถพยาบาล</b><small>นราธิวาส</small></div><span class="pill" style="background:#ecfdf5;color:#059669">กำลังช่วย</span></div>
+        <div class="mrow"><div class="dot" style="background:#7c3aed"><i class="fa-solid fa-graduation-cap"></i></div><div class="t"><b>ขอเข้าร่วมอบรมอาชีพ</b><small>งานบรรเทา — รออนุมัติ</small></div><span class="pill" style="background:#f5f3ff;color:#7c3aed">รออนุมัติ</span></div>
+        <div class="mrow"><div class="dot" style="background:#d97706"><i class="fa-solid fa-bowl-food"></i></div><div class="t"><b>ขาดแคลนเสบียง</b><small>ต.สะเตงนอก · 25 ครัวเรือน</small></div><span class="pill" style="background:#fffbeb;color:#d97706">รอรับเรื่อง</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2>ทุกอย่างที่ต้องใช้ในการประสานงาน</h2>
+    <p class="sub">ออกแบบมาเพื่องานจริง — เรียบง่ายสำหรับประชาชน ครบเครื่องมือสำหรับผู้ดูแล</p>
+    <div class="grid g3">
+      <div class="card"><div class="ic" style="background:#e0f2fe;color:#004c97"><i class="fa-solid fa-map-location-dot"></i></div><h3>แผนที่จุดเกิดเหตุ</h3><p>ดูเหตุการณ์ทั้งหมดบนแผนที่แบบเรียลไทม์ พร้อมหมุดจุดสำคัญ (โรงพยาบาล จุดพักพิง ฯลฯ) ที่ผู้ดูแลกำหนดเอง</p></div>
+      <div class="card"><div class="ic" style="background:#ecfdf5;color:#059669"><i class="fa-solid fa-paper-plane"></i></div><h3>แจ้งเหตุ / ส่งคำของ่ายๆ</h3><p>ประชาชนแจ้งผ่านมือถือได้ทันที เลือกสถานการณ์ อัปโหลดรูป และระบุพิกัดอัตโนมัติ</p></div>
+      <div class="card"><div class="ic" style="background:#f5f3ff;color:#7c3aed"><i class="fa-solid fa-users"></i></div><h3>จัดการอาสาสมัคร</h3><p>ระบบสมัครอาสาสมัครพร้อมทักษะและอุปกรณ์ แอดมินอนุมัติและมอบหมายเคสได้ในหน้าเดียว</p></div>
+      <div class="card"><div class="ic" style="background:#fff7ed;color:#d97706"><i class="fa-solid fa-chart-column"></i></div><h3>แดชบอร์ด + กราฟสถิติ</h3><p>ศูนย์บัญชาการสรุปเคสตามสถานะ จังหวัด และประเภท พร้อมกราฟแนวโน้มรายวัน</p></div>
+      <div class="card"><div class="ic" style="background:#fef2f2;color:#dc2626"><i class="fa-solid fa-bullhorn"></i></div><h3>ระบบประกาศ</h3><p>ส่งประกาศถึงประชาชนหรือทีมงาน พร้อมระดับความสำคัญ และแจ้งเตือนบนหน้าแรก</p></div>
+      <div class="card"><div class="ic" style="background:#f0f9ff;color:#0369a1"><i class="fa-solid fa-palette"></i></div><h3>White-label ได้เต็มที่</h3><p>เปลี่ยนชื่อแอปและโลโก้ของหน่วยงานตัวเองได้จากหน้าตั้งค่า ไม่ต้องแก้โค้ด</p></div>
+      <div class="card"><div class="ic" style="background:#eff6ff;color:#1d4ed8"><i class="fa-solid fa-location-dot"></i></div><h3>ติดตามเคส</h3><p>ประชาชนติดตามสถานะคำขอของตัวเองได้ด้วยรหัสเคสหรือเบอร์โทร พร้อมไทม์ไลน์อัปเดต</p></div>
+      <div class="card"><div class="ic" style="background:#fdf4ff;color:#a21caf"><i class="fa-solid fa-hand-holding-hand"></i></div><h3>เสนอและรับความช่วยเหลือ</h3><p>อาสาสมัครเสนอความช่วยเหลือเข้ามาได้ แอดมินจับคู่กับเคส และโอนย้ายเคสระหว่างอาสา</p></div>
+      <div class="card"><div class="ic" style="background:#f0fdfa;color:#0d9488"><i class="fa-solid fa-server"></i></div><h3>Self-hosted / On-premise</h3><p>ติดตั้งบนเซิร์ฟเวอร์หรือเครื่องในเครือข่ายของคุณเอง ข้อมูลทั้งหมดยู่ใน SQLite ไฟล์เดียว ไม่พึ่ง cloud service ภายนอก — ใช้งานในพื้นที่ที่อินเทอร์เน็ตไม่เสถียรได้</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="screenshots">
+  <div class="wrap">
+    <h2>ดูของจริง</h2>
+    <p class="sub">หน้าจอจริงจากระบบ Dlite — ใช้งานได้ทั้งมือถือและคอมพิวเตอร์</p>
+    <figure class="shot shot-wide">
+      <img src="assets/admin-desktop.png" alt="แดชบอร์ดผู้ดูแลระบบ Dlite" loading="lazy">
+      <figcaption>แดชบอร์ดผู้ดูแลระบบ — ศูนย์บัญชาการ สถิติกราฟ และจัดการคำขอ</figcaption>
+    </figure>
+
+  </div>
+</section>
+<section id="modes" style="background:var(--bg)">
+  <div class="wrap">
+    <h2>2 โหมด ใช้งานได้ทั้งสองแบบ</h2>
+    <p class="sub">สลับโหมดได้จากหน้าตั้งค่า — ข้อมูลและระบบหลังบ้านใช้ร่วมกันได้ทั้งหมด</p>
+    <div class="modes">
+      <div class="mode d">
+        <div class="mode-txt">
+          <h3><i class="fa-solid fa-house-flood-water" style="color:#dc2626"></i> โหมดภัยพิบัติ / น้ำท่วม</h3>
+          <p style="color:var(--mut);font-size:15px">เน้นการแจ้งเหตุฉุกเฉินและกู้ภัย</p>
+          <ul>
+            <li>แจ้งน้ำท่วม อพยพ SOS เหตุทางการแพทย์</li>
+            <li>ความต้องการ: อาหาร น้ำ ยา ที่พัก</li>
+            <li>ทักษะอาสา: กู้ภัยทางน้ำ ปฐมพยาบาล</li>
+            <li>ไอคอนและสี CTA แบบฉุกเฉิน</li>
+          </ul>
+        </div>
+        <div class="mode-img"><img src="assets/mobile-disaster.jpg" alt="หน้าจอมือถือโหมดภัยพิบัติ" loading="lazy"></div>
+      </div>
+      <div class="mode r">
+        <div class="mode-txt">
+          <h3><i class="fa-solid fa-people-group" style="color:#059669"></i> โหมดงานบรรเทาทั่วไป</h3>
+          <p style="color:var(--mut);font-size:15px">เน้นบริการและสวัสดิการระยะยาว</p>
+          <ul>
+            <li>ส่งคำขอ: ตรวจสุขภาพ คำปรึกษา ฝึกอาชีพ</li>
+            <li>ขอเงินช่วยเหลือ/สงเคราะห์ ขาดแคลนเสบียง</li>
+            <li>ทักษะอาสา: สังคมสงเคราะห์ ฝึกอาชีพ กฎหมาย</li>
+            <li>โทนสีเขียว เป็นมิตรกว่า</li>
+          </ul>
+        </div>
+        <div class="mode-img"><img src="assets/mobile-relief.jpg" alt="หน้าจอมือถือโหมดบรรเทา" loading="lazy"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roles">
+  <div class="wrap">
+    <h2>ออกแบบตามบทบาทผู้ใช้</h2>
+    <p class="sub">ประชาชนใช้งานง่าย ทีมงานมีเครื่องมือครบ</p>
+    <div class="roles">
+      <div class="role"><div class="who"><i class="fa-solid fa-house-user" style="color:var(--blue)"></i> ประชาชน</div><ul><li>แจ้งเหตุ/ส่งคำขอผ่านมือถือ</li><li>ติดตามสถานะเคสของตัวเอง</li><li>ดูประกาศและแผนที่เหตุการณ์</li></ul></div>
+      <div class="role"><div class="who"><i class="fa-solid fa-people-carry-box" style="color:var(--emerald)"></i> อาสาสมัคร</div><ul><li>สมัครและกรอกโปรไฟล์ทักษะ/อุปกรณ์</li><li>รับเคสจากคลังงานกลาง</li><li>อัปเดตความคืบหน้า ส่งรูปหน้างาน</li></ul></div>
+      <div class="role"><div class="who"><i class="fa-solid fa-user-gear" style="color:#7c3aed"></i> ผู้ดูแลระบบ</div><ul><li>อนุมัติอาสาและจัดการบัญชีหลายคน</li><li>มอบหมาย/ปิดเคส ดูสถิติกราฟ</li><li>ตั้งค่าแบรนด์ โหมด และจุดสำคัญ</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg)">
+  <div class="wrap">
+    <h2>ฟังก์ชันทั้งหมดในระบบ</h2>
+    <p class="sub">รวมทุกความสามารถที่มีใน Dlite ณ ปัจจุบัน</p>
+    <div class="grid g2">
+      <div class="card"><div class="ic" style="background:#e0f2fe;color:#004c97"><i class="fa-solid fa-bullhorn"></i></div><h3>ฝั่งประชาชน</h3><ul style="list-style:none;margin-top:8px"><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>แจ้งเหตุ/ส่งคำขอ พร้อมเลือกรูปแบบตามโหมด</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>อัปโหลดรูปประกอบเหตุการณ์</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ระบุพิกัดอัตโนมัติ + เลือกพื้นที่</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ติดตามสถานะเคส + ประวัติอัปเดต</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ยืนยันปิดเคสด้วยตัวเองเมื่อได้รับความช่วยเหลือ</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ดูประกาศและเหตุการณ์บนแผนที่</li></ul></div>
+      <div class="card"><div class="ic" style="background:#ecfdf5;color:#059669"><i class="fa-solid fa-users"></i></div><h3>ฝั่งอาสาสมัคร</h3><ul style="list-style:none;margin-top:8px"><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>สมัครสมาชิกออนไลน์ กรอกทักษะ/อุปกรณ์/องค์กร</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ตั้งสถานะพร้อมงาน/ติดภารกิจ</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>รับเคสจากคลังงานกลาง (claim)</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>อัปเดตสถานะ + แนบรูปหน้างาน</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>เสนอความช่วยเหลือและโอนย้ายเคส</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>จดจำการเข้าสู่ระบบ 30 วัน</li></ul></div>
+      <div class="card"><div class="ic" style="background:#fff7ed;color:#d97706"><i class="fa-solid fa-user-shield"></i></div><h3>ฝั่งผู้ดูแลระบบ</h3><ul style="list-style:none;margin-top:8px"><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ศูนย์บัญชาการ + กราฟสถิติ (Chart.js)</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>จัดการคำขอ: กรอง/มอบหมาย/เปลี่ยนสถานะ/ปิดเคส/ลบ</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>อนุมัติ/ระงับ/ลบอาสาสมัคร</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>จัดการองค์กรเครือข่ายและจุดสำคัญ (POI)</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>จัดการบัญชีผู้ดูแล/ผู้ดูหลายคน</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ตั้งค่าแบรนด์ โหมด ระบบ และพื้นที่</li></ul></div>
+      <div class="card"><div class="ic" style="background:#f5f3ff;color:#7c3aed"><i class="fa-solid fa-shield-halved"></i></div><h3>ความปลอดภัยและระบบ</h3><ul style="list-style:none;margin-top:8px"><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>แยกบทบาท admin / volunteer / viewer</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>CSRF token ทุกฟอร์ม POST</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>จำกัดการ login ผิด (throttle 5 ครั้ง/5 นาที)</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>รหัสผ่าน hash + remember-token แบบปลอดภัย</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>รองรับ 2 โหมด: ภัยพิบัติ / งานบรรเทา</li><li style="font-size:14.5px;color:var(--mut);padding:6px 0 6px 22px;position:relative"><i class="fa-solid fa-check" style="position:absolute;left:2px;color:var(--emerald);font-size:12px;top:10px"></i>ฐานข้อมูล SQLite ไฟล์เดียว — backup/ย้ายเครื่องง่าย</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <h2>เทคโนโลยี</h2>
+    <p class="sub">เบา เรียบง่าย ดูแลง่าย</p>
+    <div class="tech-grid">
+      <div class="tech-item"><div class="tic" style="background:#eef2ff;color:#4f46e5"><i class="fa-brands fa-php"></i></div><div><b>PHP 8.2+</b><small>MVC เขียนเอง ไม่ต้องใช้ framework หนักๆ</small></div></div>
+      <div class="tech-item"><div class="tic" style="background:#ecfdf5;color:#059669"><i class="fa-solid fa-database"></i></div><div><b>SQLite</b><small>ไฟล์เดียวจบ ไม่ต้องตั้งค่า database server</small></div></div>
+      <div class="tech-item"><div class="tic" style="background:#e0f2fe;color:#0369a1"><i class="fa-solid fa-map"></i></div><div><b>Leaflet + OSM</b><small>แผนที่โต้ตอบฟรี ไม่ต้อง API key</small></div></div>
+      <div class="tech-item"><div class="tic" style="background:#f0f9ff;color:#0284c7"><i class="fa-solid fa-wind"></i></div><div><b>Tailwind CSS</b><small>UI สวย ตอบสนองทุกขนาดจอ</small></div></div>
+      <div class="tech-item"><div class="tic" style="background:#fff7ed;color:#d97706"><i class="fa-solid fa-chart-column"></i></div><div><b>Chart.js</b><small>กราฟสถิติอ่านง่ายสำหรับผู้บริหาร</small></div></div>
+      <div class="tech-item"><div class="tic" style="background:#fef2f2;color:#dc2626"><i class="fa-brands fa-js"></i></div><div><b>Vanilla JS</b><small>ไม่ต้อง build tool ใช้ได้ทันที</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="install" style="background:var(--bg)">
+  <div class="wrap">
+    <h2>ติดตั้งและใช้งาน</h2>
+    <p class="sub">พร้อมใช้ในไม่กี่นาที — ต้องการเพียง PHP และเว็บเซิร์ฟเวอร์ทั่วไป</p>
+    <div class="steps">
+      <div class="step"><h4>โคลนโปรเจกต์</h4><p>ดาวน์โหลดหรือ clone repository</p><code>git clone &lt;repo-url&gt;</code></div>
+      <div class="step"><h4>วางบนเซิร์ฟเวอร์</h4><p>อัปโหลดขึ้น hosting ที่รองรับ PHP (Apache/Nginx) ชี้ document root ไปที่โฟลเดอร์โปรเจกต์</p></div>
+      <div class="step"><h4>ตั้งค่าครั้งแรก</h4><p>เปิดเว็บ → ระบบสร้างฐานข้อมูล SQLite ให้อัตโนมัติ แล้วล็อกอิน admin เริ่มตั้งค่าแบรนด์/โหมด</p></div>
+      <div class="step"><h4>เชิญทีมงาน</h4><p>สร้างบัญชีแอดมิน/ผู้ดู เพิ่มอาสาสมัคร หรือเปิดรับสมัครอาสาออนไลน์พร้อมอนุมัติ</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="cta">
+      <h2>พร้อมเริ่มประสานงานแล้วหรือยัง?</h2>
+      <p>Dlite เป็นระบบเปิด — ศึกษา แก้ไข และนำไปใช้กับพื้นที่ของคุณได้</p>
+      <a class="btn btn-w" href="https://github.com"><i class="fa-brands fa-github"></i> ดูโค้ดบน GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Dlite — ระบบประสานงานช่วยเหลือและบรรเทาทุกข์</span>
+    <span><i class="fa-solid fa-heart" style="color:#dc2626"></i> พัฒนาด้วยใจเพื่อสังคม</span>
+  </div>
+</footer>
+
+</body>
+</html>
