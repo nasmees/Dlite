@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ผู้ดูแลระบบ — Dlite Demo (โหมดบรรเทา)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="../assets/demo.css">
+<style>
+.admin-head{display:flex;align-items:center;gap:12px;padding-top:4px}
+.admin-head .who{flex:1}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.quick a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;background:#fff;border:2px solid var(--line);border-radius:12px;font-size:11px;font-weight:600;color:var(--ink)}
+.quick a i{font-size:18px;color:var(--brand2)}
+@media(max-width:480px){.quick{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div id="demoBanner"></div>
+<div class="wrap" style="padding-top:16px">
+
+  <div class="admin-head">
+    <div class="who">
+      <b style="font-size:17px">ศูนย์บัญชาการ</b>
+      <p class="muted">ผู้ดูแลระบบ · นราธิวาส</p>
+    </div>
+    <a class="btn btn-ghost" href="login.html" style="padding:8px 12px;font-size:13px"><i class="fa-solid fa-arrow-left"></i> ออกจากเดโม</a>
+  </div>
+
+  <!-- stats -->
+  <div class="sec-title"><i class="fa-solid fa-chart-simple"></i> ภาพรวมวันนี้</div>
+  <div class="stat-grid" id="statGrid"></div>
+
+  <!-- chart -->
+  <div class="sec-title"><i class="fa-solid fa-chart-column"></i> คำขอรายวัน (7 วัน)</div>
+  <div class="card" style="padding:16px"><canvas id="chart" height="180"></canvas></div>
+
+  <!-- quick actions -->
+  <div class="sec-title"><i class="fa-solid fa-bolt"></i> ทางลัด</div>
+  <div class="quick">
+    <a href="index.html"><i class="fa-solid fa-map"></i>แผนที่</a>
+    <a href="track.html"><i class="fa-solid fa-magnifying-glass"></i>ค้นหาเคส</a>
+    <a href="volunteer.html"><i class="fa-solid fa-users"></i>อาสาสมัคร</a>
+    <a href="#"><i class="fa-solid fa-bullhorn"></i>ประกาศ</a>
+  </div>
+
+  <!-- cases table -->
+  <div class="sec-title"><i class="fa-solid fa-list"></i> คำขอล่าสุด</div>
+  <div class="card" style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr><th>รหัส</th><th>เหตุการณ์</th><th>พื้นที่</th><th>สถานะ</th><th>เวลา</th></tr></thead>
+      <tbody id="caseRows"></tbody>
+    </table>
+  </div>
+
+  <!-- volunteers -->
+  <div class="sec-title"><i class="fa-solid fa-people-group"></i> ทีมอาสา</div>
+  <div class="card" style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr><th>ชื่อ</th><th>ทักษะเด่น</th><th>สถานะ</th></tr></thead>
+      <tbody>
+        <tr><td><b>อาสาสมัคร ตัวอย่าง</b><br><span class="muted">อาสาอาสา · นราธิวาส</span></td><td><span class="pill st-accepted">กู้ภัยทางน้ำ</span> <span class="pill st-accepted">ปฐมพยาบาล</span></td><td><span class="pill st-completed">พร้อมงาน</span></td></tr>
+        <tr><td><b>นางสาว ตัวอย่าง</b><br><span class="muted">จิตอาสา · เมืองนราธิวาส</span></td><td><span class="pill st-accepted">แจกจ่ายเสบียง</span> <span class="pill st-accepted">ขับรถ</span></td><td><span class="pill st-in_progress">ติดภารกิจ</span></td></tr>
+        <tr><td><b>นาย ตัวอย่าง</b><br><span class="muted">จิตอาสา · ต.สะเตงนอก</span></td><td><span class="pill st-accepted">ช่างซ่อม</span></td><td><span class="pill st-completed">พร้อมงาน</span></td></tr>
+        <tr><td><b>อาสา รออนุมัติ</b><br><span class="muted">สมัครใหม่ · เมื่อวาน</span></td><td class="muted">—</td><td><span class="pill st-pending">รออนุมัติ</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="muted" style="text-align:center;margin:26px 0 8px">— สิ้นสุดเดโม —</p>
+</div>
+<div id="navSlot"></div>
+<div id="toast"></div>
+
+<script src="../assets/demo.js"></script>
+<script src="../assets/relief.js"></script>
+<script>
+const D = window.DEMO;
+document.getElementById('demoBanner').innerHTML = D.demoBanner();
+document.getElementById('navSlot').innerHTML = D.bottomNav('');
+
+// stats
+const c = { all: D.CASES.length, pending: 0, active: 0, done: 0 };
+D.CASES.forEach(x => { if (x.status==='pending') c.pending++; if (['accepted','in_progress'].includes(x.status)) c.active++; if (x.status==='completed') c.done++; });
+const defs = [
+  { label:'คำขอทั้งหมด', v:c.all, icon:'fa-layer-group', bg:'#eff6ff', fg:'#2563eb' },
+  { label:'รอดำเนินการ', v:c.pending, icon:'fa-hourglass-half', bg:'#fef2f2', fg:'#dc2626' },
+  { label:'กำลังดำเนินการ', v:c.active, icon:'fa-person-running', bg:'#fffbeb', fg:'#d97706' },
+  { label:'เสร็จสิ้น', v:c.done, icon:'fa-circle-check', bg:'#ecfdf5', fg:'#059669' },
+];
+document.getElementById('statGrid').innerHTML = defs.map(s => `
+  <div class="card stat"><span class="sic" style="background:${s.bg};color:${s.fg}"><i class="fa-solid ${s.icon}"></i></span>
+  <span><b style="color:${s.fg}">${s.v}</b><span>${s.label}</span></span></div>`).join('');
+
+// cases table
+document.getElementById('caseRows').innerHTML = D.CASES.map(x => `
+  <tr>
+    <td><b>${x.code}</b></td>
+    <td>${D.esc(x.title)}<br><span class="muted">~${x.people} คน</span></td>
+    <td class="muted">${D.esc(x.place)}</td>
+    <td>${D.statusPill(x.status)}</td>
+    <td class="muted">${D.esc(x.time)}</td>
+  </tr>`).join('');
+
+// chart
+new Chart(document.getElementById('chart'), {
+  type: 'bar',
+  data: {
+    labels: ['จ 13', 'อ 14', 'พ 15', 'พฤ 16', 'ศ 17', 'ส 18', 'อา 19'],
+    datasets: [{ label: 'คำขอใหม่', data: [2, 4, 3, 6, 5, 8, 4],
+      backgroundColor: '#0369a1', borderRadius: 8 }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+});
+</script>
+</body>
+</html>

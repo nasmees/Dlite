@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เข้าสู่ระบบ — Dlite Demo (โหมดบรรเทา)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../assets/demo.css">
+</head>
+<body>
+<div id="demoBanner"></div>
+<div class="wrap" style="padding-top:32px;max-width:30rem">
+
+  <div style="text-align:center;margin-bottom:24px">
+    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#0369a1,#0ea5e9);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:26px;margin-bottom:10px"><i class="fa-solid fa-house-flood-water"></i></div>
+    <h1 style="font-size:22px;font-weight:800">Dlite</h1>
+    <p class="muted">เข้าสู่ระบบเพื่อใช้งาน (เดโม: ไม่ต้องใส่รหัสผ่านจริง)</p>
+  </div>
+
+  <a class="card" href="volunteer.html" style="display:flex;align-items:center;gap:14px;padding:18px;margin-bottom:12px">
+    <span class="case-ic green" style="width:52px;height:52px;font-size:22px"><i class="fa-solid fa-people-carry-box"></i></span>
+    <span style="flex:1"><b style="font-size:16px">อาสาสมัคร</b><br><span class="muted">รับเคส อัปเดตสถานะหน้างาน</span></span>
+    <i class="fa-solid fa-chevron-right" style="color:#94a3b8"></i>
+  </a>
+
+  <a class="card" href="admin.html" style="display:flex;align-items:center;gap:14px;padding:18px;margin-bottom:12px">
+    <span class="case-ic blue" style="width:52px;height:52px;font-size:22px"><i class="fa-solid fa-user-gear"></i></span>
+    <span style="flex:1"><b style="font-size:16px">ผู้ดูแลระบบ</b><br><span class="muted">แดชบอร์ด สถิติ จัดการเคสและอาสา</span></span>
+    <i class="fa-solid fa-chevron-right" style="color:#94a3b8"></i>
+  </a>
+
+  <a class="card" href="index.html" style="display:flex;align-items:center;gap:14px;padding:18px">
+    <span class="case-ic" style="width:52px;height:52px;font-size:22px;background:#f1f5f9;color:#64748b"><i class="fa-solid fa-arrow-left"></i></span>
+    <span style="flex:1"><b style="font-size:16px">กลับไปหน้าแรก</b><br><span class="muted">ใช้งานในฐานะประชาชน</span></span>
+  </a>
+</div>
+<div id="navSlot"></div>
+<script src="../assets/demo.js"></script>
+<script src="../assets/relief.js"></script>
+<script>
+document.getElementById('demoBanner').innerHTML = window.DEMO.demoBanner();
+document.getElementById('navSlot').innerHTML = window.DEMO.bottomNav('login');
+</script>
+</body>
+</html>

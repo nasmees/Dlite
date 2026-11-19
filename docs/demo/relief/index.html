@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>หน้าแรก — Dlite Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../assets/demo.css">
+</head>
+<body>
+<div id="demoBanner"></div>
+<div class="wrap" style="padding-top:16px">
+
+  <!-- Hero -->
+  <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
+    <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#0369a1,#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px"><i class="fa-solid fa-people-group"></i></div>
+    <div>
+      <h1 style="font-size:20px;font-weight:800;color:#0A2D52;line-height:1.2">Dlite</h1>
+      <p class="muted">มี <b style="color:var(--red)">3</b> คำขอที่รอดำเนินการ</p>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <section id="map">
+    <div class="sec-title"><i class="fa-solid fa-map-location-dot"></i> แผนที่คำขอในพื้นที่<a class="more-link" href="#">แผนที่เต็ม →</a></div>
+    <div class="card" style="padding:0;overflow:hidden;position:relative">
+      <div id="homeMap" class="mapbox"></div>
+      <div class="map-filters" id="mapFilters"></div>
+      <div class="map-legend">
+        <div><span class="dot" style="background:#DC2626"></span> รอช่วยเหลือ</div>
+        <div><span class="dot" style="background:#EAB308"></span> กำลังเข้าพื้นที่</div>
+        <div><span class="dot" style="background:#16A34A"></span> ช่วยเหลือแล้ว</div>
+        <div><i class="fa-solid fa-location-dot" style="color:#64748b"></i> จุดสำคัญ</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Status summary -->
+  <section>
+    <div class="sec-title"><i class="fa-solid fa-chart-simple"></i> สถานะความช่วยเหลือ</div>
+    <div class="stat-grid" id="statGrid"></div>
+  </section>
+
+  <!-- Urgent incidents -->
+  <section>
+    <div class="sec-title" style="color:var(--red)"><i class="fa-solid fa-bolt" style="color:var(--amber)"></i> คำขอล่าสุด<a class="more-link" href="#">ดูทั้งหมด →</a></div>
+    <div id="urgentList" style="display:grid;gap:10px"></div>
+  </section>
+
+  <!-- Announcement -->
+  <section>
+    <div class="card" style="padding:14px 16px;display:flex;gap:10px;align-items:flex-start;border-color:#fde68a;background:#fffbeb">
+      <i class="fa-solid fa-bullhorn" style="color:#d97706;margin-top:2px"></i>
+      <div>
+        <b style="font-size:14px">ประกาศ: ทีมงานพร้อมให้บริการและประสานความช่วยเหลือ</b>
+        <p class="muted" style="margin-top:2px">หากต้องการบริการหรือส่งคำขอโปรดใช้ระบบนี้ หรือโทร 1669</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="muted" style="text-align:center;margin:26px 0 8px">— สิ้นสุดเดโม —</p>
+</div>
+<div id="navSlot"></div>
+<div id="toast"></div>
+
+<script src="../assets/demo.js"></script>
+<script src="../assets/relief.js"></script>
+<script>
+const D = window.DEMO;
+document.getElementById('demoBanner').innerHTML = D.demoBanner();
+document.getElementById('navSlot').innerHTML = D.bottomNav('home');
+
+// stats
+const counts = { all: D.CASES.length, pending: 0, in_progress: 0, completed: 0 };
+D.CASES.forEach(c => { if (c.status === 'pending') counts.pending++; if (c.status === 'in_progress' || c.status === 'accepted') counts.in_progress++; if (c.status === 'completed') counts.completed++; });
+const statDefs = [
+  { label: 'ทั้งหมด', count: counts.all, icon: 'fa-list', bg: '#f1f5f9', fg: '#334155' },
+  { label: 'รอความช่วยเหลือ', count: counts.pending, icon: 'fa-triangle-exclamation', bg: '#fef2f2', fg: '#dc2626' },
+  { label: 'กำลังช่วยเหลือ', count: counts.in_progress, icon: 'fa-bolt', bg: '#fffbeb', fg: '#d97706' },
+  { label: 'ช่วยเหลือสำเร็จ', count: counts.completed, icon: 'fa-circle-check', bg: '#ecfdf5', fg: '#059669' },
+];
+document.getElementById('statGrid').innerHTML = statDefs.map(s => `
+  <a class="card stat" href="#">
+    <span class="sic" style="background:${s.bg};color:${s.fg}"><i class="fa-solid ${s.icon}"></i></span>
+    <span><b style="color:${s.fg}">${s.count}</b><span>${s.label}</span></span>
+  </a>`).join('');
+
+// urgent list = pending + in_progress sorted by urgency
+document.getElementById('urgentList').innerHTML = D.CASES
+  .filter(c => ['pending','in_progress','accepted'].includes(c.status))
+  .slice(0, 4)
+  .map(c => D.caseCard(c)).join('') || '<div class="card" style="padding:24px;text-align:center" class="muted">ไม่มีเหตุการณ์เร่งด่วน</div>';
+
+// map
+const map = L.map('homeMap', { zoomControl: false }).setView([6.42, 101.82], 11);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 19 }).addTo(map);
+
+function dotIcon(color, mine) {
+  const inner = mine
+    ? `<div style="background:${color};width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>`
+    : `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>`;
+  return L.divIcon({ className: '', html: inner, iconSize: mine ? [22,22] : [16,16], iconAnchor: mine ? [11,11] : [8,8] });
+}
+const markers = L.layerGroup().addTo(map);
+const pois = L.layerGroup().addTo(map);
+function loadMarkers(status) {
+  markers.clearLayers();
+  const pts = D.CASES.filter(c => status === 'all' || (status === 'active' ? c.status !== 'completed' && c.status !== 'cancelled' : c.status === status));
+  pts.forEach(c => {
+    const m = L.marker([c.lat, c.lng], { icon: dotIcon(D.STATUS_COLOR[c.status], false) });
+    m.bindPopup(`<div style="font-family:Kanit,sans-serif;min-width:170px">
+      <strong>${D.esc(c.code)} — ${D.esc(c.title)}</strong><br>${D.esc(c.place)}<br>
+      ผู้ได้รับผลกระทบ ~${c.people} คน<br>
+      <a href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}" target="_blank" rel="noopener" style="color:#EA580C;font-weight:600">นำทาง →</a><br>
+      <a href="track.html?code=${c.code}" style="color:#0F3D6E;font-weight:600">ดูรายละเอียด →</a></div>`);
+    markers.addLayer(m);
+  });
+  if (status === 'active' && pts.length) map.fitBounds(pts.map(c => [c.lat, c.lng]), { padding: [40,40] });
+}
+D.POIS.forEach(p => {
+  const m = L.marker([p.lat, p.lng], { icon: L.divIcon({ className:'', html:`<div style="font-size:24px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">${p.emoji}</div>`, iconSize:[28,28], iconAnchor:[14,14] }) });
+  m.bindPopup(`<div style="font-family:Kanit,sans-serif;min-width:180px"><strong>${p.emoji} ${p.title}</strong><br><span style="font-size:12px;color:#475569">${p.cat}</span><br><a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-weight:700;color:#EA580C">นำทางไปจุดนี้ →</a></div>`);
+  pois.addLayer(m);
+});
+
+// filter chips
+const filters = [['active','ต้องการความช่วย'],['all','ทั้งหมด'],['pending','รอช่วยเหลือ'],['in_progress','กำลังช่วย'],['completed','สำเร็จแล้ว']];
+document.getElementById('mapFilters').innerHTML = filters.map(([k,l],i) =>
+  `<button class="fchip ${i===0?'on':''}" data-s="${k}">${l}</button>`).join('');
+document.querySelectorAll('.fchip').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.fchip').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  loadMarkers(b.dataset.s);
+}));
+loadMarkers('active');
+</script>
+</body>
+</html>

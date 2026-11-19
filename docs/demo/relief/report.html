@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ส่งคำขอ — Dlite Demo (โหมดบรรเทา)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../assets/demo.css">
+</head>
+<body>
+<div id="demoBanner"></div>
+<div class="wrap" style="padding-top:16px;padding-bottom:110px">
+
+  <h1 style="font-size:20px;font-weight:800;margin-bottom:4px"><i class="fa-solid fa-people-group" style="color:var(--green)"></i> ส่งคำขอ</h1>
+  <p class="muted" style="margin-bottom:16px">ข้อมูลจะถูกส่งถึงทีมประสานงานโดยตรง (ในเดโมจะไม่ถูกบันทึกจริง)</p>
+
+  <!-- Scenario -->
+  <div class="sec-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red)"></i> ต้องการบริการอะไร? <span style="color:var(--red)">*</span></div>
+  <div id="scenarioList" style="display:grid;gap:10px"></div>
+
+  <!-- Contact -->
+  <div class="sec-title"><i class="fa-solid fa-user"></i> ข้อมูลติดต่อ</div>
+  <div class="card" style="padding:16px;display:grid;gap:12px">
+    <div><label class="f">ชื่อผู้แจ้ง <span style="color:var(--red)">*</span></label><input class="input" id="fName" placeholder="ชื่อ-นามสกุล / ชื่อเล่น"></div>
+    <div><label class="f">เบอร์โทร <span class="muted" style="font-weight:400">(ไม่บังคับ)</span></label><input class="input" id="fPhone" type="tel" inputmode="tel" placeholder="08x-xxx-xxxx"></div>
+  </div>
+
+  <!-- GPS -->
+  <div class="sec-title"><i class="fa-solid fa-location-crosshairs"></i> ตำแหน่งเหตุการณ์</div>
+  <div class="card" style="padding:14px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="gpsDot" style="width:10px;height:10px;border-radius:50%;background:#cbd5e1;flex-shrink:0"></span>
+      <span id="gpsStatus" class="muted" style="flex:1;font-weight:600;color:var(--brand)">กำลังหาตำแหน่งอัตโนมัติ…</span>
+      <button class="btn btn-ghost" id="btnGps" type="button" style="padding:8px 12px;font-size:13px"><i class="fa-solid fa-map-pin"></i> ระบุเอง</button>
+    </div>
+    <div id="mapPicker" style="display:none;margin-top:10px">
+      <div id="pickMap" style="height:220px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
+      <p class="muted" style="margin-top:6px">แตะบนแผนที่เพื่อเลือกจุดเกิดเหตุ</p>
+    </div>
+  </div>
+
+  <!-- Details -->
+  <div class="sec-title"><i class="fa-solid fa-circle-info"></i> รายละเอียดคำขอ</div>
+  <div class="card" style="padding:16px;display:grid;gap:12px">
+    <div><label class="f">จุดสังเกตใกล้เคียง <span class="muted" style="font-weight:400">(ไม่บังคับ)</span></label><input class="input" id="fLandmark" placeholder="เช่น หน้าวัด, ซอยข้างร้านขายยา"></div>
+    <div>
+      <label class="f">รูปภาพ <span class="muted" style="font-weight:400">(ไม่บังคับ — ในเดโมเลือกไฟล์ได้แต่ไม่อัปโหลด)</span></label>
+      <label style="display:block;border:2px dashed #cbd5e1;border-radius:14px;padding:18px;text-align:center;cursor:pointer;background:#fff">
+        <i class="fa-solid fa-camera" style="font-size:26px;color:#94a3b8"></i>
+        <p class="muted" style="margin-top:6px">แตะเพื่อถ่ายรูป / เลือกรูป</p>
+        <input type="file" accept="image/*" style="display:none" onchange="document.getElementById('photoName').textContent=this.files[0]?.name||''">
+      </label>
+      <p id="photoName" class="muted" style="margin-top:6px"></p>
+    </div>
+  </div>
+
+  <!-- Optional -->
+  <details class="card" style="margin-top:12px">
+    <summary style="padding:14px 16px;font-weight:700;font-size:14px;cursor:pointer;color:#92400e;background:#fffbeb;border-radius:16px">เพิ่มเติม (ไม่บังคับ) — แตะเพื่อกรอก</summary>
+    <div style="padding:0 16px 16px;display:grid;gap:12px">
+      <div><label class="f">จำนวนผู้ได้รับผลกระทบ</label><input class="input" id="fPeople" type="number" min="1" value="1" inputmode="numeric"></div>
+      <div><label class="f">พื้นที่</label>
+        <select class="input" id="fArea">
+          <option>ต.เขาตูม · นราธิวาส</option><option>ต.สะเตงนอก · นราธิวาส</option>
+          <option>เมืองนราธิวาส · นราธิวาส</option><option>ต.บางพลี · นราธิวาส</option>
+        </select>
+      </div>
+      <div><label class="f">รายละเอียด</label><textarea class="input" id="fDesc" rows="3" placeholder="อธิบายสถานการณ์เพิ่มเติม" style="resize:vertical"></textarea></div>
+      <div><label class="f">ความต้องการเฉพาะ (เลือกได้หลายข้อ)</label>
+        <div id="needTypes" style="display:grid;gap:8px"></div>
+      </div>
+    </div>
+  </details>
+</div>
+
+<!-- Sticky submit -->
+<div style="position:fixed;bottom:4.5rem;left:0;right:0;z-index:900;background:#fff;border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))">
+  <div style="max-width:32rem;margin:0 auto">
+    <button class="btn btn-red" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> ส่งคำขอเลย</button>
+    <p class="muted" style="text-align:center;margin-top:6px;font-size:12px">ข้อมูลถูกส่งถึงทีมประสานงานโดยตรง</p>
+  </div>
+</div>
+<div id="navSlot"></div>
+<div id="toast"></div>
+<div id="submitOverlay"></div>
+
+<script src="../assets/demo.js"></script>
+<script src="../assets/relief.js"></script>
+<script>
+const D = window.DEMO;
+document.getElementById('demoBanner').innerHTML = D.demoBanner();
+document.getElementById('navSlot').innerHTML = D.bottomNav('report');
+
+// scenario cards — data-driven so relief mode can override via relief.js
+let selected = null;
+function renderScenarios() {
+  document.getElementById('scenarioList').innerHTML = D.SCENARIO_LIST.map(sc => {
+    const s = D.SCENARIOS[sc.key] || D.SCENARIOS.other;
+    return `<button type="button" class="scenario ${sc.sos?'sos':''}" data-k="${sc.key}" data-types="${sc.types.join(',')}">
+      <span class="sic" style="background:${s.chip};color:${s.cicon}"><i class="fa-solid ${s.icon}"></i></span>
+      <span class="st"><b>${s.label}</b><small>${sc.sub}</small></span>
+      <span class="chk"><i class="fa-solid fa-check"></i></span>
+    </button>`;
+  }).join('');
+  document.querySelectorAll('.scenario').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.scenario').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    selected = b.dataset.k;
+    // auto-check need types
+    const types = b.dataset.types.split(',');
+    document.querySelectorAll('#needTypes input').forEach(cb => {
+      cb.checked = types.includes(cb.value);
+    });
+  }));
+}
+renderScenarios();
+
+// need type checkboxes
+document.getElementById('needTypes').innerHTML = Object.entries(D.NEED_TYPES).map(([k,l]) => `
+  <label style="display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;font-size:14px;font-weight:500">
+    <input type="checkbox" value="${k}" style="width:18px;height:18px;accent-color:var(--brand2)"> ${l}
+  </label>`).join('');
+
+// GPS — fake locate then allow manual pick
+let lat = 6.42, lng = 101.82, picked = false;
+function setGps(txt, color) {
+  document.getElementById('gpsStatus').textContent = txt;
+  document.getElementById('gpsDot').style.background = color;
+}
+setTimeout(() => setGps('พบตำแหน่งของคุณ (เดโม: จุดตัวอย่าง)', '#059669'), 900);
+document.getElementById('btnGps').addEventListener('click', () => {
+  const box = document.getElementById('mapPicker');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  if (box.style.display === 'block' && !window._pickMap) {
+    window._pickMap = L.map('pickMap').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(window._pickMap);
+    const pin = L.marker([lat, lng], { draggable: true }).addTo(window._pickMap);
+    pin.on('dragend', () => { [lat, lng] = [pin.getLatLng().lat, pin.getLatLng().lng]; setGps(`เลือกเอง: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, '#2563eb'); });
+    window._pickMap.on('click', e => { pin.setLatLng(e.latlng); [lat, lng] = [e.latlng.lat, e.latlng.lng]; setGps(`เลือกเอง: ${lat.toFixed(4)}, ${lng.toFixed(4)}`, '#2563eb'); });
+    setGps('แตะแผนที่เพื่อเลือกจุดเกิดเหตุ', '#2563eb');
+  }
+});
+
+// submit → fake success
+document.getElementById('btnSubmit').addEventListener('click', () => {
+  const name = document.getElementById('fName').value.trim();
+  if (!selected) return D.toast('กรุณาเลือกบริการที่ต้องการก่อน', 3000);
+  if (!name) return D.toast('กรุณากรอกชื่อผู้แจ้ง', 3000);
+  const ov = document.getElementById('submitOverlay');
+  const code = 'DL-' + (2600 + Math.floor(Math.random() * 900));
+  ov.innerHTML = `
+    <div class="spinner" id="ovSpin"></div>
+    <p class="muted">กำลังส่งข้อมูล…</p>`;
+  ov.classList.add('show');
+  setTimeout(() => {
+    ov.innerHTML = `
+      <div class="check-pop"><i class="fa-solid fa-check"></i></div>
+      <h2 style="font-size:22px;font-weight:800">ส่งคำขอสำเร็จ!</h2>
+      <p class="muted">รหัสเคสของคุณ: <b style="color:var(--brand2);font-size:18px">${code}</b><br>(เดโม: รหัสนี้เป็นตัวอย่าง ไม่ได้บันทึกจริง)</p>
+      <a class="btn btn-p" href="track.html?code=${code}" style="padding:13px 28px"><i class="fa-solid fa-magnifying-glass"></i> ติดตามสถานะ</a>
+      <a class="btn btn-ghost" href="index.html" style="padding:10px 20px">กลับหน้าแรก</a>`;
+    D.toast('ส่งสำเร็จ (เดโม)');
+  }, 1400);
+});
+</script>
+</body>
+</html>

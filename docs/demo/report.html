@@ -95,21 +95,14 @@ const D = window.DEMO;
 document.getElementById('demoBanner').innerHTML = D.demoBanner();
 document.getElementById('navSlot').innerHTML = D.bottomNav('report');
 
-// scenario cards
-const order = ['flood','evac','sos','medical','supplies','other'];
-const subs = { flood:'ขออาหาร น้ำ ที่พัก', evac:'เร่งด่วน ต้องการที่พัก', sos:'อันตรายถึงชีวิต ต้องการทันที', medical:'ต้องการยาและการรักษา', supplies:'แจ้งจุดแจกจ่าย', other:'เล่าเหตุการณ์โดยย่อ' };
-const scData = {
-  flood:{types:['food','water','shelter'],urgency:'high'}, evac:{types:['shelter','evacuation'],urgency:'critical'},
-  sos:{types:['medicine','evacuation'],urgency:'critical',sos:1}, medical:{types:['medicine'],urgency:'high'},
-  supplies:{types:['food','water'],urgency:'normal'}, other:{types:['other'],urgency:'normal'},
-};
+// scenario cards — data-driven so relief mode can override via relief.js
 let selected = null;
 function renderScenarios() {
-  document.getElementById('scenarioList').innerHTML = order.map(k => {
-    const s = D.SCENARIOS[k];
-    return `<button type="button" class="scenario ${scData[k].sos?'sos':''}" data-k="${k}">
+  document.getElementById('scenarioList').innerHTML = D.SCENARIO_LIST.map(sc => {
+    const s = D.SCENARIOS[sc.key] || D.SCENARIOS.other;
+    return `<button type="button" class="scenario ${sc.sos?'sos':''}" data-k="${sc.key}" data-types="${sc.types.join(',')}">
       <span class="sic" style="background:${s.chip};color:${s.cicon}"><i class="fa-solid ${s.icon}"></i></span>
-      <span class="st"><b>${s.label}</b><small>${subs[k]}</small></span>
+      <span class="st"><b>${s.label}</b><small>${sc.sub}</small></span>
       <span class="chk"><i class="fa-solid fa-check"></i></span>
     </button>`;
   }).join('');
@@ -118,8 +111,9 @@ function renderScenarios() {
     b.classList.add('sel');
     selected = b.dataset.k;
     // auto-check need types
+    const types = b.dataset.types.split(',');
     document.querySelectorAll('#needTypes input').forEach(cb => {
-      cb.checked = scData[selected].types.includes(cb.value);
+      cb.checked = types.includes(cb.value);
     });
   }));
 }
