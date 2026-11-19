@@ -58,6 +58,7 @@ class Helper
         $types = self::needTypes();
         if (isset($types[$key])) return $types[$key];
         if (isset(self::NEED_TYPES_DISASTER[$key])) return self::NEED_TYPES_DISASTER[$key];
+        if (isset(self::NEED_TYPES_RELIEF[$key])) return self::NEED_TYPES_RELIEF[$key];
         return $key;
     }
 
@@ -97,6 +98,7 @@ class Helper
         $labels = self::scenarioLabels();
         if (isset($labels[$key])) return $labels[$key];
         if (isset(self::SCENARIOS_DISASTER[$key])) return self::SCENARIOS_DISASTER[$key];
+        if (isset(self::SCENARIOS_RELIEF[$key])) return self::SCENARIOS_RELIEF[$key];
         return $key;
     }
 

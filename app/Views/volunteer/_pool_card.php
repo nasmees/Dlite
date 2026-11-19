@@ -59,8 +59,12 @@ $hasLoc = !empty($n['lat']) && !empty($n['lng']);
         <?php endif; ?>
     </a>
 
-    <div class="px-3.5 pb-3.5 pt-1">
-        <button type="button" class="claim-btn w-full text-base font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl py-3.5 transition" data-id="<?= (int)$n['id'] ?>">
+    <div class="px-3.5 pb-3.5 pt-1 flex gap-2">
+        <a href="<?= Helper::url('volunteer/cases/' . (int)$n['id']) ?>"
+           class="flex-1 text-sm font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-xl py-3 text-center transition">
+            <i class="fa-solid fa-eye mr-1"></i> ดูรายละเอียด
+        </a>
+        <button type="button" class="claim-btn flex-[1.4] text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl py-3 transition" data-id="<?= (int)$n['id'] ?>">
             รับเคสนี้
         </button>
     </div>
