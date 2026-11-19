@@ -1,4 +1,4 @@
-Deep South Care Lite
+Dlite
 =====================
 
 Document root ควรเป็นโฟลเดอร์หลักของโปรเจกต์ (ที่มี index.php)

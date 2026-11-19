@@ -1,6 +1,6 @@
 <?php
 /**
- * Deep South Care Lite - Front Controller
+ * Dlite - Front Controller
  * Shared hosting ready (Apache)
  */
 

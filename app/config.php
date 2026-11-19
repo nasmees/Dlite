@@ -1,10 +1,10 @@
 <?php
 /**
- * Deep South Care Lite - Configuration
+ * Dlite - Configuration
  * Pure PHP + SQLite for shared hosting
  */
 
-define('APP_NAME', 'Deep South Care Lite');
+define('APP_NAME', 'Dlite');
 define('APP_VERSION', '1.0.0');
 define('APP_URL', ''); // Auto-detect or set base URL
 

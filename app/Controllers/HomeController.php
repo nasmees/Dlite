@@ -10,7 +10,7 @@ class HomeController
         // Sectioned home — map card + status summary + latest requests
         $publicOnly = !Auth::check();
         View::render('needs/home', [
-            'title' => 'Deep South Care',
+            'title' => 'Dlite',
             'areas' => Area::all(),
             'needTypes' => Helper::needTypes(),
             'csrf' => Auth::csrfToken(),
