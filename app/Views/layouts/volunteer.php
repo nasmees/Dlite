@@ -174,13 +174,9 @@
                 <span class="text-xs font-semibold text-red-600 mt-1">เปิดเคส</span>
             </div>
 
-            <a href="<?= Helper::url() ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 text-slate-500">
-                <?php if ($vLogo): ?>
-                    <img src="<?= Helper::e($vLogo) ?>" alt="" class="w-6 h-6 object-contain rounded">
-                <?php else: ?>
-                    <i class="fa-solid fa-water text-xl"></i>
-                <?php endif; ?>
-                <span>เว็บหลัก</span>
+            <a href="<?= Helper::url('map') ?>" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-xs pt-2 pb-2.5 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>แผนที่</span>
             </a>
         </div>
     </nav>
