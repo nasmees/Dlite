@@ -5,7 +5,7 @@ uploads/*
 !uploads/.htaccess
 
 # Source screenshots (already copied to landing/assets/)
-landing/รูป/
+docs/รูป/
 
 # OS / editor
 Thumbs.db

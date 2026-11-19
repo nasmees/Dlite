@@ -12,7 +12,7 @@
 
 | แดชบอร์ดผู้ดูแลระบบ | โหมดภัยพิบัติ (มือถือ) | โหมดบรรเทา (มือถือ) |
 |:---:|:---:|:---:|
-| ![admin](landing/assets/admin-desktop.png) | ![disaster](landing/assets/mobile-disaster.jpg) | ![relief](landing/assets/mobile-relief.jpg) |
+| ![admin](docs/assets/admin-desktop.png) | ![disaster](docs/assets/mobile-disaster.jpg) | ![relief](docs/assets/mobile-relief.jpg) |
 
 ## คุณสมบัติหลัก
 
@@ -97,7 +97,7 @@
 dlite/
 ├── index.php               # Front controller + routes
 ├── .htaccess
-├── landing/                # Landing page (static, สำหรับ GitHub Pages)
+├── docs/                # Landing page (static, สำหรับ GitHub Pages)
 │   ├── index.html
 │   └── assets/             # screenshots
 ├── assets/                 # CSS/JS static
