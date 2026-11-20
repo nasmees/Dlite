@@ -24,7 +24,7 @@ class TrackController
                     $need = $found;
                     $db = Database::getInstance();
                     $stmt = $db->prepare("
-                        SELECT old_status, new_status, message, created_at
+                        SELECT old_status, new_status, message, photo_path, created_at
                         FROM updates
                         WHERE need_id = ? AND is_internal = 0
                         ORDER BY created_at ASC, id ASC

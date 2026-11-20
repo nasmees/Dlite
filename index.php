@@ -59,6 +59,7 @@ $router->post('/volunteer/new', [VolunteerController::class, 'store']);
 $router->get('/volunteer/cases/{id}', [VolunteerController::class, 'show']);
 $router->post('/volunteer/cases/{id}/claim', [VolunteerController::class, 'claim']);
 $router->post('/volunteer/cases/{id}/status', [VolunteerController::class, 'setStatus']);
+$router->post('/volunteer/cases/{id}/note', [VolunteerController::class, 'note']);
 $router->post('/volunteer/cases/{id}/release', [VolunteerController::class, 'release']);
 $router->post('/volunteer/cases/{id}/transfer', [VolunteerController::class, 'transfer']);
 $router->post('/volunteer/availability', [VolunteerController::class, 'availability']);

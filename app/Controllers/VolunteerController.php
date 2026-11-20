@@ -161,12 +161,55 @@ class VolunteerController
         }
 
         $message = trim($_POST['message'] ?? '');
-        $ok = Need::updateStatus((int)$id, $status, (int)$u['id'], $message !== '' ? $message : null);
+        $photoPath = null;
+        if (!empty($_FILES['photo']['tmp_name']) && ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            $photoPath = ImageUploader::store($_FILES['photo']);
+        }
+        $ok = Need::updateStatus((int)$id, $status, (int)$u['id'], $message !== '' ? $message : null, $photoPath);
         if ($ok && in_array($status, ['accepted', 'in_progress'], true) && !$need['assigned_to']) {
             Need::assign((int)$id, (int)$u['id']);
         }
         if ($ok) Need::flushCache();
         View::json(['ok' => $ok, 'message' => $ok ? 'อัปเดตสถานะแล้ว' : 'ไม่สำเร็จ']);
+    }
+
+    /**
+     * Work log — message and/or photo attached to the case timeline
+     * without changing status. Visible on the public timeline.
+     */
+    public function note(string $id): void
+    {
+        $u = $this->guard();
+        $this->verifyCsrf();
+
+        $need = Need::find((int)$id);
+        if (!$need) {
+            View::json(['ok' => false, 'message' => 'ไม่พบเคส'], 404);
+        }
+        $isMine = (int)($need['assigned_to'] ?? 0) === (int)$u['id'];
+        if (!$isMine && !Auth::isAdmin()) {
+            View::json(['ok' => false, 'message' => 'เฉพาะผู้รับผิดชอบเคสนี้เท่านั้น'], 403);
+        }
+        if (in_array($need['status'], ['completed', 'cancelled'], true)) {
+            View::json(['ok' => false, 'message' => 'เคสนี้ปิดแล้ว ไม่สามารถบันทึกได้'], 422);
+        }
+
+        $message = trim($_POST['message'] ?? '');
+        $photoPath = null;
+        $photoInvalid = false;
+        if (!empty($_FILES['photo']['tmp_name']) && ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            $photoPath = ImageUploader::store($_FILES['photo']);
+            $photoInvalid = $photoPath === null;
+        }
+        if ($message === '' && !$photoPath) {
+            View::json(['ok' => false, 'message' => $photoInvalid
+                ? 'ไฟล์รูปไม่ถูกต้อง — รองรับ JPG/PNG/WebP/GIF ไม่เกิน 2MB'
+                : 'กรุณาพิมพ์ข้อความหรือแนบรูป'], 422);
+        }
+
+        $ok = Need::addNote((int)$id, (int)$u['id'], $message, $photoPath);
+        if ($ok) Need::flushCache();
+        View::json(['ok' => $ok, 'message' => $ok ? 'บันทึกความคืบหน้าแล้ว' : 'บันทึกไม่สำเร็จ']);
     }
 
     public function release(string $id): void

@@ -107,6 +107,29 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
         <?php endif; ?>
     </div>
 
+    <!-- Work log: progress note + photo (public timeline) -->
+    <?php if ($canAct && !$isFinal): ?>
+    <div class="card p-4">
+        <h2 class="text-base font-semibold text-slate-800 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check text-brand-600"></i> บันทึกความคืบหน้า
+        </h2>
+        <div class="space-y-2.5">
+            <textarea id="noteMsg" rows="2" class="input-field !text-base" placeholder="เช่น ถึงจุดเกิดเหตุแล้ว กำลังประเมินสถานการณ์…"></textarea>
+            <div class="flex items-center gap-2">
+                <label class="flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl px-3 py-2.5 cursor-pointer transition">
+                    <i class="fa-solid fa-camera"></i>
+                    <span id="notePhotoLabel">แนบรูปหน้างาน</span>
+                    <input type="file" id="notePhoto" accept="image/*" capture="environment" class="hidden">
+                </label>
+                <button type="button" id="noteSubmit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl px-4 py-2.5 text-sm transition">
+                    <i class="fa-solid fa-paper-plane mr-1"></i> บันทึก
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">ข้อความและรูปจะแสดงในไทม์ไลน์ที่ผู้แจ้งและทีมงานมองเห็น</p>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Timeline (staff sees internal notes too) -->
     <?php if (!empty($history)): ?>
     <div class="card p-5">
@@ -126,6 +149,11 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
                     </div>
                     <?php if ($h['message']): ?>
                         <div class="text-slate-600 mt-0.5"><?= Helper::e($h['message']) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($h['photo_path'])): ?>
+                        <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="block mt-1.5">
+                            <img src="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" alt="รูปหน้างาน" loading="lazy" class="rounded-xl max-h-48 w-auto border border-slate-200">
+                        </a>
                     <?php endif; ?>
                     <div class="text-sm text-slate-400 mt-0.5">
                         <?= Helper::timeAgo($h['created_at']) ?><?= !empty($h['user_name']) ? ' · ' . Helper::e($h['user_name']) : '' ?>
@@ -226,6 +254,35 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
         if (!sel.value) { window.Toast.show('กรุณาเลือกอาสาสมัคร', 'err'); return; }
         e.target.disabled = true;
         await post('/transfer', { to_user_id: sel.value });
+    });
+
+    // Work log — message + optional photo
+    const notePhoto = document.getElementById('notePhoto');
+    notePhoto?.addEventListener('change', () => {
+        document.getElementById('notePhotoLabel').textContent = notePhoto.files[0]?.name || 'แนบรูปหน้างาน';
+    });
+    document.getElementById('noteSubmit')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const msg = document.getElementById('noteMsg').value.trim();
+        const file = notePhoto?.files?.[0];
+        if (!msg && !file) { window.Toast.show('กรุณาพิมพ์ข้อความหรือแนบรูป', 'err'); return; }
+        btn.disabled = true;
+        const old = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่ง…';
+        const json = await window.staffAction('/volunteer/cases/' + id + '/note', {
+            message: msg,
+            photo: file || undefined,
+        }, { reload: false });
+        if (json && json.ok) {
+            window.Toast.show(json.message || 'บันทึกแล้ว', 'ok');
+            document.getElementById('noteMsg').value = '';
+            if (notePhoto) notePhoto.value = '';
+            document.getElementById('notePhotoLabel').textContent = 'แนบรูปหน้างาน';
+            setTimeout(() => location.reload(), 600);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
     });
 })();
 </script>

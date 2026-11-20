@@ -249,6 +249,11 @@ class Database
                 $db->exec("ALTER TABLE updates ADD COLUMN is_internal INTEGER NOT NULL DEFAULT 0");
             }
 
+            // Ensure updates.photo_path exists — progress photos attached to work logs
+            if (!in_array('photo_path', $updCols, true)) {
+                $db->exec("ALTER TABLE updates ADD COLUMN photo_path TEXT");
+            }
+
             // Ensure needs.client_token exists — idempotency key for offline queue retries
             if (!in_array('client_token', $needCols, true)) {
                 $db->exec("ALTER TABLE needs ADD COLUMN client_token TEXT");

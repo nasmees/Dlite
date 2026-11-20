@@ -318,7 +318,7 @@ class Need
         return $stmt->rowCount() > 0 || self::find($id) !== null;
     }
 
-    public static function updateStatus(int $id, string $status, ?int $userId = null, ?string $message = null): bool
+    public static function updateStatus(int $id, string $status, ?int $userId = null, ?string $message = null, ?string $photoPath = null): bool
     {
         $db = Database::getInstance();
         $need = self::find($id);
@@ -327,8 +327,24 @@ class Need
         $db->prepare("UPDATE needs SET status = ?, updated_at = datetime('now','localtime') WHERE id = ?")
            ->execute([$status, $id]);
 
-        $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message) VALUES (?,?,?,?,?)")
-           ->execute([$id, $userId, $need['status'], $status, $message]);
+        $db->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message, photo_path) VALUES (?,?,?,?,?,?)")
+           ->execute([$id, $userId, $need['status'], $status, $message, $photoPath]);
+
+        return true;
+    }
+
+    /**
+     * Append a work-log entry (message and/or photo) without changing status.
+     * Public timeline entry — visible to the reporter.
+     */
+    public static function addNote(int $id, ?int $userId, string $message, ?string $photoPath = null): bool
+    {
+        $need = self::find($id);
+        if (!$need) return false;
+
+        Database::getInstance()
+            ->prepare("INSERT INTO updates (need_id, user_id, old_status, new_status, message, photo_path) VALUES (?,?,?,?,?,?)")
+            ->execute([$id, $userId, $need['status'], $need['status'], $message !== '' ? $message : null, $photoPath]);
 
         return true;
     }

@@ -154,6 +154,11 @@ $myScenario = $need ? Helper::scenarioLabel($need['scenario'] ?? null) : '';
                         <?php if ($h['message']): ?>
                             <div class="text-slate-600 mt-0.5"><?= Helper::e($h['message']) ?></div>
                         <?php endif; ?>
+                        <?php if (!empty($h['photo_path'])): ?>
+                            <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="block mt-1.5">
+                                <img src="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" alt="รูปหน้างาน" loading="lazy" class="rounded-xl max-h-48 w-auto border border-slate-200">
+                            </a>
+                        <?php endif; ?>
                         <div class="text-sm text-slate-400 mt-0.5"><?= Helper::timeAgo($h['created_at']) ?></div>
                     </div>
                 </li>
@@ -403,6 +408,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 <span class="w-2 h-2 rounded-full bg-brand-400 mt-1.5 shrink-0"></span>
                 <div><span class="font-medium text-slate-700">${old}<strong>${esc(st)}</strong></span>
                 ${h.message ? `<div class="text-slate-500">${esc(h.message)}</div>` : ''}
+                ${h.photo_path ? `<a href="${base}/${esc(h.photo_path)}" target="_blank" rel="noopener"><img src="${base}/${esc(h.photo_path)}" alt="รูปหน้างาน" class="rounded-lg max-h-40 w-auto border border-slate-200 mt-1"></a>` : ''}
                 <div class="text-slate-400">${esc(timeAgoTH(h.created_at))}</div></div>
             </li>`;
         }).join('');
