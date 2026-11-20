@@ -1092,10 +1092,14 @@ class AdminController
         Auth::requireAdmin();
 
         View::render('admin/settings', [
-            'title' => 'ตั้งค่าเว็บไซต์',
+            'title' => 'ตั้งค่าระบบ',
             'appName' => Setting::get('app_name') ?: APP_NAME,
             'appMode' => Helper::appMode(),
             'logoUrl' => Helper::brandLogoUrl(),
+            'uiCustomAll' => json_decode(Setting::get('ui_custom') ?: '{}', true) ?: [],
+            'uiPalettes' => Helper::uiPalettes(),
+            'scenarioCards' => Helper::scenarioCards(),
+            'needTypeMap' => Helper::needTypes(),
             'csrf' => Auth::csrfToken(),
             'user' => Auth::user(),
             'isAdmin' => Auth::isAdmin(),
@@ -1118,6 +1122,30 @@ class AdminController
         if (in_array($mode, ['disaster', 'relief'], true)) {
             Setting::set('app_mode', $mode);
             Need::flushCache();
+        }
+
+        // Custom labels/icons/colors for the report-form lists (per mode)
+        $uiRaw = (string)($_POST['ui_custom'] ?? '');
+        if ($uiRaw !== '') {
+            $uiData = json_decode($uiRaw, true);
+            if (is_array($uiData)) {
+                $clean = [];
+                foreach (['disaster', 'relief'] as $m) {
+                    foreach (['scenario', 'need_type'] as $g) {
+                        foreach (($uiData[$m][$g] ?? []) as $k => $o) {
+                            if (!is_string($k) || !preg_match('/^[a-z_]+$/', $k) || !is_array($o)) continue;
+                            $e = [];
+                            if (!empty($o['label'])) $e['label'] = mb_substr(trim((string)$o['label']), 0, 80);
+                            if (!empty($o['sub']))   $e['sub']   = mb_substr(trim((string)$o['sub']), 0, 120);
+                            if (!empty($o['icon']) && preg_match('/^fa-[a-z0-9-]+$/', (string)$o['icon'])) $e['icon'] = $o['icon'];
+                            if (!empty($o['color']) && isset(Helper::uiPalettes()[$o['color']])) $e['color'] = $o['color'];
+                            if ($e) $clean[$m][$g][$k] = $e;
+                        }
+                    }
+                }
+                Setting::set('ui_custom', $clean ? json_encode($clean, JSON_UNESCAPED_UNICODE) : null);
+                Need::flushCache();
+            }
         }
 
         if (!empty($_POST['remove_logo'])) {

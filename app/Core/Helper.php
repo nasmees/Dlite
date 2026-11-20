@@ -43,9 +43,53 @@ class Helper
         'other' => 'อื่นๆ',
     ];
 
+    /**
+     * Preset color palettes admins can pick for scenario/need-type chips.
+     * [chip classes, bare-icon text class]
+     */
+    private const UI_PALETTES = [
+        'slate'   => ['bg-slate-100 text-slate-600',   'text-slate-500',   '#64748b'],
+        'sky'     => ['bg-sky-50 text-sky-700',       'text-sky-600',     '#0284c7'],
+        'blue'    => ['bg-blue-50 text-blue-700',     'text-blue-600',    '#2563eb'],
+        'indigo'  => ['bg-indigo-50 text-indigo-700', 'text-indigo-600',  '#4f46e5'],
+        'violet'  => ['bg-violet-50 text-violet-700', 'text-violet-600',  '#7c3aed'],
+        'purple'  => ['bg-purple-50 text-purple-700', 'text-purple-600',  '#9333ea'],
+        'rose'    => ['bg-rose-50 text-rose-700',     'text-rose-600',    '#e11d48'],
+        'red'     => ['bg-red-50 text-red-700',       'text-red-600',     '#dc2626'],
+        'orange'  => ['bg-orange-50 text-orange-700', 'text-orange-600',  '#ea580c'],
+        'amber'   => ['bg-amber-50 text-amber-700',   'text-amber-600',   '#d97706'],
+        'emerald' => ['bg-emerald-50 text-emerald-700','text-emerald-600','#059669'],
+        'teal'    => ['bg-teal-50 text-teal-700',     'text-teal-600',    '#0d9488'],
+    ];
+
+    /** Palette map for the settings UI (name => chip/icon classes) */
+    public static function uiPalettes(): array
+    {
+        return self::UI_PALETTES;
+    }
+
+    /**
+     * Admin-customized labels/icons/colors for the report-form lists,
+     * stored per operating mode in settings.ui_custom (JSON).
+     * Shape: { "<mode>": { "scenario": {key:{label,sub,icon,color}}, "need_type": {...} } }
+     */
+    public static function uiCustom(string $group): array
+    {
+        static $all = null;
+        if ($all === null) {
+            $raw = Setting::get('ui_custom');
+            $all = $raw ? (json_decode($raw, true) ?: []) : [];
+        }
+        return $all[self::appMode()][$group] ?? [];
+    }
+
     public static function needTypes(): array
     {
-        return self::appMode() === 'relief' ? self::NEED_TYPES_RELIEF : self::NEED_TYPES_DISASTER;
+        $types = self::appMode() === 'relief' ? self::NEED_TYPES_RELIEF : self::NEED_TYPES_DISASTER;
+        foreach (self::uiCustom('need_type') as $k => $c) {
+            if (isset($types[$k]) && !empty($c['label'])) $types[$k] = $c['label'];
+        }
+        return $types;
     }
 
     /**
@@ -85,7 +129,11 @@ class Helper
      */
     public static function scenarioLabels(): array
     {
-        return self::appMode() === 'relief' ? self::SCENARIOS_RELIEF : self::SCENARIOS_DISASTER;
+        $labels = self::appMode() === 'relief' ? self::SCENARIOS_RELIEF : self::SCENARIOS_DISASTER;
+        foreach (self::uiCustom('scenario') as $k => $c) {
+            if (isset($labels[$k]) && !empty($c['label'])) $labels[$k] = $c['label'];
+        }
+        return $labels;
     }
 
     /**
@@ -108,7 +156,7 @@ class Helper
     public static function scenarioCards(): array
     {
         if (self::appMode() === 'relief') {
-            return [
+            $cards = [
                 ['key' => 'health',    'label' => 'ตรวจสุขภาพ / พบแพทย์',  'sub' => 'ลงทะเบียนรับบริการสุขภาพ',       'types' => ['medical', 'counseling'], 'urgency' => 'normal',   'sos' => false],
                 ['key' => 'counsel',   'label' => 'ต้องการคำปรึกษา',         'sub' => 'จิตใจ กฎหมาย การเงิน',            'types' => ['counseling'],              'urgency' => 'normal',   'sos' => false],
                 ['key' => 'training',  'label' => 'ฝึกอาชีพ / หางาน',        'sub' => 'เรียนรู้ทักษะเพื่อมีรายได้',       'types' => ['training'],                'urgency' => 'normal',   'sos' => false],
@@ -116,15 +164,24 @@ class Helper
                 ['key' => 'supplies',  'label' => 'ขาดแคลนเสบียง / ของใช้',   'sub' => 'อาหาร น้ำ ของใช้จำเป็น',         'types' => ['supplies'],                'urgency' => 'normal',   'sos' => false],
                 ['key' => 'other',     'label' => 'เรื่องอื่นๆ',              'sub' => 'เล่าเหตุการณ์โดยย่อ',             'types' => ['other'],                   'urgency' => 'normal',   'sos' => false],
             ];
+        } else {
+            $cards = [
+                ['key' => 'flood',    'label' => 'น้ำท่วม / ถนนท่วม',   'sub' => 'ขออาหาร น้ำ ที่พัก',        'types' => ['food','water','shelter'], 'urgency' => 'high',     'sos' => false],
+                ['key' => 'evac',     'label' => 'ต้องอพยพ / บ้านเสียหาย','sub' => 'เร่งด่วน ต้องการที่พัก',      'types' => ['shelter','evacuation'],   'urgency' => 'critical', 'sos' => false],
+                ['key' => 'sos',      'label' => 'เหตุฉุกเฉิน SOS',       'sub' => 'อันตรายถึงชีวิต ต้องการทันที', 'types' => ['medicine','evacuation'],  'urgency' => 'critical', 'sos' => true],
+                ['key' => 'medical',  'label' => 'เจ็บป่วย / ได้รับบาดเจ็บ','sub' => 'ต้องการยาและการรักษา',      'types' => ['medicine'],               'urgency' => 'high',     'sos' => false],
+                ['key' => 'supplies', 'label' => 'ขาดแคลนอาหาร / น้ำ',    'sub' => 'แจ้งจุดแจกจ่าย',             'types' => ['food','water'],           'urgency' => 'normal',   'sos' => false],
+                ['key' => 'other',    'label' => 'ความเสียหายอื่นๆ',       'sub' => 'เล่าเหตุการณ์โดยย่อ',         'types' => ['other'],                  'urgency' => 'normal',   'sos' => false],
+            ];
         }
-        return [
-            ['key' => 'flood',    'label' => 'น้ำท่วม / ถนนท่วม',   'sub' => 'ขออาหาร น้ำ ที่พัก',        'types' => ['food','water','shelter'], 'urgency' => 'high',     'sos' => false],
-            ['key' => 'evac',     'label' => 'ต้องอพยพ / บ้านเสียหาย','sub' => 'เร่งด่วน ต้องการที่พัก',      'types' => ['shelter','evacuation'],   'urgency' => 'critical', 'sos' => false],
-            ['key' => 'sos',      'label' => 'เหตุฉุกเฉิน SOS',       'sub' => 'อันตรายถึงชีวิต ต้องการทันที', 'types' => ['medicine','evacuation'],  'urgency' => 'critical', 'sos' => true],
-            ['key' => 'medical',  'label' => 'เจ็บป่วย / ได้รับบาดเจ็บ','sub' => 'ต้องการยาและการรักษา',      'types' => ['medicine'],               'urgency' => 'high',     'sos' => false],
-            ['key' => 'supplies', 'label' => 'ขาดแคลนอาหาร / น้ำ',    'sub' => 'แจ้งจุดแจกจ่าย',             'types' => ['food','water'],           'urgency' => 'normal',   'sos' => false],
-            ['key' => 'other',    'label' => 'ความเสียหายอื่นๆ',       'sub' => 'เล่าเหตุการณ์โดยย่อ',         'types' => ['other'],                  'urgency' => 'normal',   'sos' => false],
-        ];
+        $custom = self::uiCustom('scenario');
+        foreach ($cards as &$c) {
+            $o = $custom[$c['key']] ?? [];
+            if (!empty($o['label'])) $c['label'] = $o['label'];
+            if (!empty($o['sub']))   $c['sub']   = $o['sub'];
+        }
+        unset($c);
+        return $cards;
     }
 
     /**
@@ -195,6 +252,8 @@ class Helper
      */
     public static function scenarioChipColor(string $key): string
     {
+        $p = self::uiCustom('scenario')[$key]['color'] ?? '';
+        if (isset(self::UI_PALETTES[$p])) return self::UI_PALETTES[$p][0];
         return match ($key) {
             'flood'    => 'bg-sky-50 text-sky-700',
             'evac'     => 'bg-orange-50 text-orange-700',
@@ -214,6 +273,8 @@ class Helper
      */
     public static function needTypeChipColor(string $key): string
     {
+        $p = self::uiCustom('need_type')[$key]['color'] ?? '';
+        if (isset(self::UI_PALETTES[$p])) return self::UI_PALETTES[$p][0];
         return match ($key) {
             'food'       => 'bg-amber-50 text-amber-700',
             'water'      => 'bg-sky-50 text-sky-700',
@@ -235,6 +296,8 @@ class Helper
      */
     public static function scenarioIconColor(string $key): string
     {
+        $p = self::uiCustom('scenario')[$key]['color'] ?? '';
+        if (isset(self::UI_PALETTES[$p])) return self::UI_PALETTES[$p][1];
         return match ($key) {
             'flood'    => 'text-sky-600',
             'evac'     => 'text-orange-600',
@@ -254,6 +317,8 @@ class Helper
      */
     public static function needTypeIconColor(string $key): string
     {
+        $p = self::uiCustom('need_type')[$key]['color'] ?? '';
+        if (isset(self::UI_PALETTES[$p])) return self::UI_PALETTES[$p][1];
         return match ($key) {
             'food'       => 'text-amber-600',
             'water'      => 'text-sky-600',
@@ -272,12 +337,20 @@ class Helper
 
     public static function scenarioIcon(?string $key, string $class = 'w-5 h-5'): string
     {
+        $customIcon = self::uiCustom('scenario')[$key]['icon'] ?? '';
+        if ($customIcon !== '') {
+            return '<i class="fa-solid ' . htmlspecialchars($customIcon, ENT_QUOTES) . ' ' . $class . '"></i>';
+        }
         $icons = self::scenarioIcons();
         return '<svg class="' . $class . '" fill="none" stroke="currentColor" viewBox="0 0 24 24">' . ($icons[$key] ?? $icons['other']) . '</svg>';
     }
 
     public static function needTypeIcon(?string $key, string $class = 'w-4 h-4'): string
     {
+        $customIcon = self::uiCustom('need_type')[$key]['icon'] ?? '';
+        if ($customIcon !== '') {
+            return '<i class="fa-solid ' . htmlspecialchars($customIcon, ENT_QUOTES) . ' ' . $class . '"></i>';
+        }
         $icons = self::needTypeIcons();
         return '<svg class="' . $class . '" fill="none" stroke="currentColor" viewBox="0 0 24 24">' . ($icons[$key] ?? $icons['other']) . '</svg>';
     }
