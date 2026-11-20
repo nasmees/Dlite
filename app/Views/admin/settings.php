@@ -14,7 +14,7 @@ $iconChoices = [
     'fa-broom','fa-trash','fa-soap','fa-ellipsis','fa-question','fa-rotate-left',
 ];
 ?>
-<div class="max-w-xl space-y-5">
+<div class="max-w-3xl space-y-5">
     <div>
         <h1 class="text-2xl font-semibold text-slate-800 flex items-center gap-2.5">
             <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -23,9 +23,16 @@ $iconChoices = [
         <p class="text-slate-500 mt-1">ตั้งค่าระบบ — ชื่อแอป โลโก้ โหมดการทำงาน และการปรับแต่งรายการในฟอร์มแจ้งเหตุ</p>
     </div>
 
-    <form id="settingsForm" enctype="multipart/form-data" class="bg-white rounded-xl border border-slate-200 p-5 space-y-5">
+    <form id="settingsForm" enctype="multipart/form-data" class="bg-white rounded-xl border border-slate-200 p-5">
         <input type="hidden" name="csrf_token" value="<?= Helper::e($csrf) ?>">
 
+        <!-- Tabs -->
+        <div class="flex gap-1 border-b border-slate-200 -mx-5 px-5 mb-5">
+            <button type="button" data-tab="general" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition text-brand-700 border-brand-600">ทั่วไป</button>
+            <button type="button" data-tab="formlists" class="tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition text-slate-500 border-transparent hover:text-slate-700">รายการในฟอร์มแจ้งเหตุ</button>
+        </div>
+
+        <div data-tabpane="general" class="tab-pane space-y-5">
         <!-- Operating mode -->
         <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">โหมดการทำงาน</label>
@@ -79,6 +86,9 @@ $iconChoices = [
             </div>
         </div>
 
+        </div><!-- /tab-pane general -->
+
+        <div data-tabpane="formlists" class="tab-pane hidden">
         <!-- Report-form list customization (per operating mode) -->
         <?php
         $mode = $appMode;
@@ -178,6 +188,7 @@ $iconChoices = [
                 </div>
             </div>
         </div>
+        </div><!-- /tab-pane formlists -->
         <!-- Shared icon picker panel -->
         <div id="iconPicker" class="hidden fixed z-[6000] w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-2">
             <input id="iconPickerSearch" type="text" placeholder="ค้นหาไอคอน เช่น water, home, food…" class="input-field !py-1.5 !text-sm mb-2 w-full" autocomplete="off">
@@ -200,6 +211,26 @@ $iconChoices = [
 <script>
 (function() {
     const form = document.getElementById('settingsForm');
+
+    // --- Tabs ---
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const panes = document.querySelectorAll('.tab-pane');
+    function showTab(name) {
+        tabBtns.forEach(b => {
+            const on = b.dataset.tab === name;
+            b.classList.toggle('text-brand-700', on);
+            b.classList.toggle('border-brand-600', on);
+            b.classList.toggle('text-slate-500', !on);
+            b.classList.toggle('border-transparent', !on);
+        });
+        panes.forEach(p => p.classList.toggle('hidden', p.dataset.tabpane !== name));
+    }
+    tabBtns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+    // Previewing an unsaved mode → jump straight to the lists tab
+    <?php if (($appMode ?? '') !== ($savedMode ?? '')): ?>
+        showTab('formlists');
+    <?php endif; ?>
+
     const logoInput = document.getElementById('logoInput');
     const preview = document.getElementById('logoPreview');
     const defaultLogo = <?= json_encode($logoUrl) ?>;
