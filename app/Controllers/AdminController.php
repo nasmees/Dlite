@@ -1091,15 +1091,23 @@ class AdminController
     {
         Auth::requireAdmin();
 
+        // Preview mode for the customization lists — follows the selected radio
+        // (?mode=) without saving until the form is submitted.
+        $displayMode = $_GET['mode'] ?? '';
+        if (!in_array($displayMode, ['disaster', 'relief'], true)) {
+            $displayMode = Helper::appMode();
+        }
+
         View::render('admin/settings', [
             'title' => 'ตั้งค่าระบบ',
             'appName' => Setting::get('app_name') ?: APP_NAME,
-            'appMode' => Helper::appMode(),
+            'appMode' => $displayMode,
+            'savedMode' => Helper::appMode(),
             'logoUrl' => Helper::brandLogoUrl(),
             'uiCustomAll' => json_decode(Setting::get('ui_custom') ?: '{}', true) ?: [],
             'uiPalettes' => Helper::uiPalettes(),
-            'scenarioCards' => Helper::scenarioCards(),
-            'needTypeMap' => Helper::needTypes(),
+            'scenarioCards' => Helper::scenarioCards($displayMode),
+            'needTypeMap' => Helper::needTypes($displayMode),
             'csrf' => Auth::csrfToken(),
             'user' => Auth::user(),
             'isAdmin' => Auth::isAdmin(),

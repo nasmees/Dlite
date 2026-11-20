@@ -1,5 +1,18 @@
 <?php
-/** Admin: site branding settings — app name + logo (white-label). Expects $appName, $logoUrl, $csrf */
+/** Admin: system settings — branding, operating mode, report-form list customization. */
+$iconChoices = [
+    'fa-water','fa-house-flood-water','fa-person-drowning','fa-cloud-rain','fa-umbrella','fa-wind','fa-snowflake',
+    'fa-bowl-food','fa-utensils','fa-bottle-water','fa-box','fa-box-open','fa-gift','fa-people-group','fa-person',
+    'fa-child','fa-baby','fa-wheelchair','fa-kit-medical','fa-stethoscope','fa-user-doctor','fa-syringe','fa-pills',
+    'fa-capsules','fa-bandage','fa-bed-pulse','fa-thermometer','fa-mask-face','fa-hand-holding-medical','fa-hand-holding-heart',
+    'fa-truck-medical','fa-briefcase','fa-money-bill-wave','fa-coins','fa-hand-holding-dollar','fa-comments','fa-comment-dots',
+    'fa-phone','fa-mobile-screen','fa-graduation-cap','fa-book','fa-person-chalkboard','fa-shirt','fa-shoe-prints',
+    'fa-house','fa-house-chimney','fa-tent','fa-map-pin','fa-location-dot','fa-truck','fa-car','fa-bus','fa-helicopter',
+    'fa-dog','fa-cat','fa-paw','fa-cow','fa-seedling','fa-leaf','fa-tree','fa-sun','fa-fire','fa-bolt',
+    'fa-triangle-exclamation','fa-circle-exclamation','fa-bell','fa-flag','fa-bullhorn','fa-star','fa-heart',
+    'fa-handshake','fa-hands-holding-child','fa-school','fa-mosque','fa-church','fa-toolbox','fa-wrench','fa-hammer',
+    'fa-broom','fa-trash','fa-soap','fa-ellipsis','fa-question','fa-rotate-left',
+];
 ?>
 <div class="max-w-xl space-y-5">
     <div>
@@ -84,7 +97,10 @@
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <h2 class="text-sm font-bold text-slate-800">ปรับแต่งรายการในฟอร์มแจ้งเหตุ</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">เปลี่ยนชื่อ / ไอคอน / สีของตัวเลือก "เกิดอะไรขึ้น?" และ "ต้องการบริการอะไร?" — ใช้ได้เฉพาะโหมด <strong><?= $mode === 'relief' ? 'งานบรรเทา' : 'ภัยพิบัติ' ?></strong> ปัจจุบัน (อีกโหมดตั้งค่าแยกกัน)</p>
+                    <p class="text-xs text-slate-500 mt-0.5">เปลี่ยนชื่อ / ไอคอน / สีของตัวเลือก "เกิดอะไรขึ้น?" และ "ต้องการบริการอะไร?" — เลือกโหมดด้านบนเพื่อสลับรายการ (แต่ละโหมดตั้งค่าแยกกัน)</p>
+                    <?php if ($appMode !== $savedMode): ?>
+                        <p class="text-xs text-amber-600 mt-1 font-medium">กำลังดูตัวอย่างโหมด <?= $appMode === 'relief' ? 'งานบรรเทา' : 'ภัยพิบัติ' ?> — ยังไม่บันทึก กด "บันทึก" เพื่อใช้โหมดนี้</p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -98,7 +114,7 @@
                     <?php foreach ($scenarioCards as $sc): $o = $customMode['scenario'][$sc['key']] ?? []; ?>
                     <div class="rounded-lg border border-slate-200 p-3 space-y-2" data-row="scenario" data-key="<?= Helper::e($sc['key']) ?>">
                         <div class="flex items-center gap-2">
-                            <span class="ui-icon-preview shrink-0 w-6 h-6 flex items-center justify-center text-slate-500"><?= Helper::scenarioIcon($sc['key'], 'w-5 h-5') ?></span>
+                            <span class="ui-icon-preview shrink-0 w-6 h-6 flex items-center justify-center text-slate-500"><?= Helper::scenarioIcon($sc['key'], 'w-5 h-5', $mode) ?></span>
                             <span class="text-xs text-slate-400 font-mono"><?= Helper::e($sc['key']) ?></span>
                             <span class="text-xs text-slate-500 truncate ml-auto">ปัจจุบัน: <?= Helper::e($sc['label']) ?></span>
                         </div>
@@ -107,7 +123,13 @@
                             <input type="text" name="ui[scenario][<?= Helper::e($sc['key']) ?>][sub]" value="<?= Helper::e($o['sub'] ?? '') ?>" maxlength="120" class="input-field !py-1.5 !text-sm" placeholder="คำอธิบายย่อย">
                         </div>
                         <div class="flex items-center gap-3 flex-wrap">
-                            <input type="text" name="ui[scenario][<?= Helper::e($sc['key']) ?>][icon]" value="<?= Helper::e($o['icon'] ?? '') ?>" class="input-field !py-1.5 !text-sm w-36" placeholder="ไอคอน fa-…" data-icon-input>
+                            <span class="icon-picker inline-flex items-center">
+                                <input type="hidden" name="ui[scenario][<?= Helper::e($sc['key']) ?>][icon]" value="<?= Helper::e($o['icon'] ?? '') ?>" class="picker-value">
+                                <button type="button" class="picker-btn inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
+                                    <i class="fa-solid <?= Helper::e($o['icon'] ?? 'fa-icons') ?> picker-btn-icon"></i>
+                                    <span><?= $o['icon'] ?? 'เลือกไอคอน' ?></span>
+                                </button>
+                            </span>
                             <?php $renderColorPicker('scenario', $sc['key'], $o['color'] ?? null); ?>
                         </div>
                     </div>
@@ -125,18 +147,34 @@
                     <?php foreach ($needTypeMap as $tk => $tl): $o = $customMode['need_type'][$tk] ?? []; ?>
                     <div class="rounded-lg border border-slate-200 p-3 space-y-2" data-row="need_type" data-key="<?= Helper::e($tk) ?>">
                         <div class="flex items-center gap-2">
-                            <span class="ui-icon-preview shrink-0 w-6 h-6 flex items-center justify-center text-slate-500"><?= Helper::needTypeIcon($tk, 'w-5 h-5') ?></span>
+                            <span class="ui-icon-preview shrink-0 w-6 h-6 flex items-center justify-center text-slate-500"><?= Helper::needTypeIcon($tk, 'w-5 h-5', $mode) ?></span>
                             <span class="text-xs text-slate-400 font-mono"><?= Helper::e($tk) ?></span>
                             <span class="text-xs text-slate-500 truncate ml-auto">ปัจจุบัน: <?= Helper::e($tl) ?></span>
                         </div>
                         <input type="text" name="ui[need_type][<?= Helper::e($tk) ?>][label]" value="<?= Helper::e($o['label'] ?? '') ?>" maxlength="80" class="input-field !py-1.5 !text-sm" placeholder="ชื่อรายการ (เว้นว่าง = ค่าเริ่มต้น)">
                         <div class="flex items-center gap-3 flex-wrap">
-                            <input type="text" name="ui[need_type][<?= Helper::e($tk) ?>][icon]" value="<?= Helper::e($o['icon'] ?? '') ?>" class="input-field !py-1.5 !text-sm w-36" placeholder="ไอคอน fa-…" data-icon-input>
+                            <span class="icon-picker inline-flex items-center">
+                                <input type="hidden" name="ui[need_type][<?= Helper::e($tk) ?>][icon]" value="<?= Helper::e($o['icon'] ?? '') ?>" class="picker-value">
+                                <button type="button" class="picker-btn inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition">
+                                    <i class="fa-solid <?= Helper::e($o['icon'] ?? 'fa-icons') ?> picker-btn-icon"></i>
+                                    <span><?= $o['icon'] ?? 'เลือกไอคอน' ?></span>
+                                </button>
+                            </span>
                             <?php $renderColorPicker('need_type', $tk, $o['color'] ?? null); ?>
                         </div>
                     </div>
                     <?php endforeach; ?>
                 </div>
+            </div>
+        </div>
+        <!-- Shared icon picker panel -->
+        <div id="iconPicker" class="hidden fixed z-[6000] w-72 bg-white border border-slate-200 rounded-xl shadow-2xl p-2">
+            <input id="iconPickerSearch" type="text" placeholder="ค้นหาไอคอน เช่น water, home, food…" class="input-field !py-1.5 !text-sm mb-2 w-full" autocomplete="off">
+            <div id="iconPickerGrid" class="grid grid-cols-6 gap-1 max-h-56 overflow-y-auto">
+                <button type="button" class="picker-opt w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400" data-icon="" title="ใช้ไอคอนเริ่มต้น"><i class="fa-solid fa-rotate-left"></i></button>
+                <?php foreach ($iconChoices as $ic): ?>
+                <button type="button" class="picker-opt w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-600" data-icon="<?= $ic ?>" title="<?= $ic ?>"><i class="fa-solid <?= $ic ?>"></i></button>
+                <?php endforeach; ?>
             </div>
         </div>
         <input type="hidden" name="ui_custom" id="uiCustomJson" value="<?= Helper::e(json_encode($uiCustomAll, JSON_UNESCAPED_UNICODE)) ?>">
@@ -176,16 +214,81 @@
 
     // --- Report-form list customization ---
     const MODE = <?= json_encode($mode) ?>;
-    document.querySelectorAll('.ui-icon-preview').forEach(p => { p.dataset.def = p.innerHTML; });
-    document.querySelectorAll('[data-icon-input]').forEach(inp => {
-        inp.addEventListener('input', () => {
-            const prev = inp.closest('[data-row]').querySelector('.ui-icon-preview');
-            const v = inp.value.trim();
-            prev.innerHTML = /^fa-[a-z0-9-]+$/.test(v)
-                ? '<i class="fa-solid ' + v + ' w-5 h-5"></i>'
-                : prev.dataset.def;
+    const SETTINGS_URL = <?= json_encode(Helper::url('admin/settings')) ?>;
+
+    // Switching operating mode reloads the page so the lists below show
+    // that mode's items (?mode= preview — nothing is saved until submit).
+    let uiDirty = false;
+    form.addEventListener('input', (e) => {
+        if (e.target.name === 'app_name' || e.target.name === 'logo' || e.target.closest('[data-row]')) uiDirty = true;
+    });
+    let currentMode = MODE;
+    document.querySelectorAll('input[name="app_mode"]').forEach(r => {
+        r.addEventListener('change', () => {
+            if (!r.checked) return;
+            if (uiDirty && !confirm('เปลี่ยนโหมดจะรีเฟรชหน้าและล้างค่าที่ยังไม่บันทึก ดำเนินการต่อ?')) {
+                document.querySelector('input[name="app_mode"][value="' + currentMode + '"]').checked = true;
+                return;
+            }
+            currentMode = r.value;
+            location.href = SETTINGS_URL + '?mode=' + r.value;
         });
     });
+
+    document.querySelectorAll('.ui-icon-preview').forEach(p => { p.dataset.def = p.innerHTML; });
+
+    // --- Shared icon picker ---
+    const picker = document.getElementById('iconPicker');
+    const pickerSearch = document.getElementById('iconPickerSearch');
+    const pickerGrid = document.getElementById('iconPickerGrid');
+    let pickerInput = null, pickerBtn = null;
+
+    function closePicker() {
+        picker.classList.add('hidden');
+        pickerInput = pickerBtn = null;
+    }
+    document.querySelectorAll('.picker-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (pickerBtn === btn) { closePicker(); return; }
+            pickerBtn = btn;
+            pickerInput = btn.closest('.icon-picker').querySelector('.picker-value');
+            const rect = btn.getBoundingClientRect();
+            picker.classList.remove('hidden');
+            const pw = picker.offsetWidth, ph = picker.offsetHeight;
+            let top = rect.bottom + 6;
+            if (top + ph > window.innerHeight - 8) top = Math.max(8, rect.top - ph - 6);
+            let left = Math.min(Math.max(8, rect.left), window.innerWidth - pw - 8);
+            picker.style.top = top + 'px';
+            picker.style.left = left + 'px';
+            pickerSearch.value = '';
+            pickerGrid.querySelectorAll('.picker-opt').forEach(o => o.classList.remove('hidden'));
+            pickerSearch.focus();
+        });
+    });
+    pickerSearch.addEventListener('input', () => {
+        const q = pickerSearch.value.trim().toLowerCase();
+        pickerGrid.querySelectorAll('.picker-opt').forEach(o => {
+            o.classList.toggle('hidden', q !== '' && !(o.dataset.icon + ' ' + o.title).toLowerCase().includes(q));
+        });
+    });
+    pickerGrid.addEventListener('click', (e) => {
+        const opt = e.target.closest('.picker-opt');
+        if (!opt || !pickerInput) return;
+        const icon = opt.dataset.icon || '';
+        pickerInput.value = icon;
+        pickerBtn.querySelector('.picker-btn-icon').className = 'fa-solid ' + (icon || 'fa-icons') + ' picker-btn-icon';
+        pickerBtn.querySelector('span').textContent = icon || 'เลือกไอคอน';
+        const row = pickerBtn.closest('[data-row]');
+        const prev = row && row.querySelector('.ui-icon-preview');
+        if (prev) prev.innerHTML = icon ? '<i class="fa-solid ' + icon + ' w-5 h-5"></i>' : prev.dataset.def;
+        uiDirty = true;
+        closePicker();
+    });
+    document.addEventListener('click', (e) => {
+        if (!picker.classList.contains('hidden') && !picker.contains(e.target) && !e.target.closest('.picker-btn')) closePicker();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePicker(); });
     document.querySelectorAll('[data-reset]').forEach(btn => {
         btn.addEventListener('click', () => {
             const group = btn.dataset.reset;
@@ -195,6 +298,7 @@
                 if (def) def.checked = true;
                 const prev = row.querySelector('.ui-icon-preview');
                 if (prev) prev.innerHTML = prev.dataset.def;
+                uiDirty = true;
             });
         });
     });

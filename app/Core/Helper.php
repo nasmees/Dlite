@@ -73,20 +73,21 @@ class Helper
      * stored per operating mode in settings.ui_custom (JSON).
      * Shape: { "<mode>": { "scenario": {key:{label,sub,icon,color}}, "need_type": {...} } }
      */
-    public static function uiCustom(string $group): array
+    public static function uiCustom(string $group, ?string $mode = null): array
     {
         static $all = null;
         if ($all === null) {
             $raw = Setting::get('ui_custom');
             $all = $raw ? (json_decode($raw, true) ?: []) : [];
         }
-        return $all[self::appMode()][$group] ?? [];
+        return $all[$mode ?? self::appMode()][$group] ?? [];
     }
 
-    public static function needTypes(): array
+    public static function needTypes(?string $mode = null): array
     {
-        $types = self::appMode() === 'relief' ? self::NEED_TYPES_RELIEF : self::NEED_TYPES_DISASTER;
-        foreach (self::uiCustom('need_type') as $k => $c) {
+        $mode = $mode ?? self::appMode();
+        $types = $mode === 'relief' ? self::NEED_TYPES_RELIEF : self::NEED_TYPES_DISASTER;
+        foreach (self::uiCustom('need_type', $mode) as $k => $c) {
             if (isset($types[$k]) && !empty($c['label'])) $types[$k] = $c['label'];
         }
         return $types;
@@ -127,10 +128,11 @@ class Helper
     /**
      * Scenario keys used by the public report form's "เกิดอะไรขึ้น?" cards
      */
-    public static function scenarioLabels(): array
+    public static function scenarioLabels(?string $mode = null): array
     {
-        $labels = self::appMode() === 'relief' ? self::SCENARIOS_RELIEF : self::SCENARIOS_DISASTER;
-        foreach (self::uiCustom('scenario') as $k => $c) {
+        $mode = $mode ?? self::appMode();
+        $labels = $mode === 'relief' ? self::SCENARIOS_RELIEF : self::SCENARIOS_DISASTER;
+        foreach (self::uiCustom('scenario', $mode) as $k => $c) {
             if (isset($labels[$k]) && !empty($c['label'])) $labels[$k] = $c['label'];
         }
         return $labels;
@@ -153,9 +155,10 @@ class Helper
     /**
      * Scenario cards for the report form — label/sub/types/urgency/sos per mode
      */
-    public static function scenarioCards(): array
+    public static function scenarioCards(?string $mode = null): array
     {
-        if (self::appMode() === 'relief') {
+        $mode = $mode ?? self::appMode();
+        if ($mode === 'relief') {
             $cards = [
                 ['key' => 'health',    'label' => 'ตรวจสุขภาพ / พบแพทย์',  'sub' => 'ลงทะเบียนรับบริการสุขภาพ',       'types' => ['medical', 'counseling'], 'urgency' => 'normal',   'sos' => false],
                 ['key' => 'counsel',   'label' => 'ต้องการคำปรึกษา',         'sub' => 'จิตใจ กฎหมาย การเงิน',            'types' => ['counseling'],              'urgency' => 'normal',   'sos' => false],
@@ -174,7 +177,7 @@ class Helper
                 ['key' => 'other',    'label' => 'ความเสียหายอื่นๆ',       'sub' => 'เล่าเหตุการณ์โดยย่อ',         'types' => ['other'],                  'urgency' => 'normal',   'sos' => false],
             ];
         }
-        $custom = self::uiCustom('scenario');
+        $custom = self::uiCustom('scenario', $mode);
         foreach ($cards as &$c) {
             $o = $custom[$c['key']] ?? [];
             if (!empty($o['label'])) $c['label'] = $o['label'];
@@ -335,9 +338,9 @@ class Helper
         };
     }
 
-    public static function scenarioIcon(?string $key, string $class = 'w-5 h-5'): string
+    public static function scenarioIcon(?string $key, string $class = 'w-5 h-5', ?string $mode = null): string
     {
-        $customIcon = self::uiCustom('scenario')[$key]['icon'] ?? '';
+        $customIcon = self::uiCustom('scenario', $mode)[$key]['icon'] ?? '';
         if ($customIcon !== '') {
             return '<i class="fa-solid ' . htmlspecialchars($customIcon, ENT_QUOTES) . ' ' . $class . '"></i>';
         }
@@ -345,9 +348,9 @@ class Helper
         return '<svg class="' . $class . '" fill="none" stroke="currentColor" viewBox="0 0 24 24">' . ($icons[$key] ?? $icons['other']) . '</svg>';
     }
 
-    public static function needTypeIcon(?string $key, string $class = 'w-4 h-4'): string
+    public static function needTypeIcon(?string $key, string $class = 'w-4 h-4', ?string $mode = null): string
     {
-        $customIcon = self::uiCustom('need_type')[$key]['icon'] ?? '';
+        $customIcon = self::uiCustom('need_type', $mode)[$key]['icon'] ?? '';
         if ($customIcon !== '') {
             return '<i class="fa-solid ' . htmlspecialchars($customIcon, ENT_QUOTES) . ' ' . $class . '"></i>';
         }
