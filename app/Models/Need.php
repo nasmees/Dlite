@@ -171,7 +171,10 @@ class Need
         }
 
         $sql = "
-            SELECT n.*, a.name as area_name, a.district, a.province, u.name as assigned_name
+            SELECT n.*, a.name as area_name, a.district, a.province, u.name as assigned_name,
+                (SELECT u2.photo_path FROM updates u2
+                 WHERE u2.need_id = n.id AND u2.photo_path IS NOT NULL AND u2.photo_path <> ''
+                 ORDER BY u2.id DESC LIMIT 1) AS latest_work_photo
             FROM needs n
             LEFT JOIN areas a ON a.id = n.area_id
             LEFT JOIN users u ON u.id = n.assigned_to
