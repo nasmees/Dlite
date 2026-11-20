@@ -1147,6 +1147,7 @@ class AdminController
                             if (!empty($o['sub']))   $e['sub']   = mb_substr(trim((string)$o['sub']), 0, 120);
                             if (!empty($o['icon']) && preg_match('/^fa-[a-z0-9-]+$/', (string)$o['icon'])) $e['icon'] = $o['icon'];
                             if (!empty($o['color']) && isset(Helper::uiPalettes()[$o['color']])) $e['color'] = $o['color'];
+                            if (!empty($o['urgency']) && in_array($o['urgency'], ['low','normal','high','critical'], true)) $e['urgency'] = $o['urgency'];
                             if ($e) $clean[$m][$g][$k] = $e;
                         }
                     }

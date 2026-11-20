@@ -153,11 +153,11 @@ class Helper
     }
 
     /**
-     * Scenario cards for the report form — label/sub/types/urgency/sos per mode
+     * Raw scenario cards before admin customization — used by settings UI
+     * to show factory defaults.
      */
-    public static function scenarioCards(?string $mode = null): array
+    public static function scenarioCardBase(string $mode): array
     {
-        $mode = $mode ?? self::appMode();
         if ($mode === 'relief') {
             $cards = [
                 ['key' => 'health',    'label' => 'ตรวจสุขภาพ / พบแพทย์',  'sub' => 'ลงทะเบียนรับบริการสุขภาพ',       'types' => ['medical', 'counseling'], 'urgency' => 'normal',   'sos' => false],
@@ -177,11 +177,25 @@ class Helper
                 ['key' => 'other',    'label' => 'ความเสียหายอื่นๆ',       'sub' => 'เล่าเหตุการณ์โดยย่อ',         'types' => ['other'],                  'urgency' => 'normal',   'sos' => false],
             ];
         }
+        return $cards;
+    }
+
+    /**
+     * Scenario cards for the report form — label/sub/types/urgency/sos per mode,
+     * with admin customizations applied.
+     */
+    public static function scenarioCards(?string $mode = null): array
+    {
+        $mode = $mode ?? self::appMode();
+        $cards = self::scenarioCardBase($mode);
         $custom = self::uiCustom('scenario', $mode);
         foreach ($cards as &$c) {
             $o = $custom[$c['key']] ?? [];
             if (!empty($o['label'])) $c['label'] = $o['label'];
             if (!empty($o['sub']))   $c['sub']   = $o['sub'];
+            if (!empty($o['urgency']) && in_array($o['urgency'], ['low','normal','high','critical'], true)) {
+                $c['urgency'] = $o['urgency'];
+            }
         }
         unset($c);
         return $cards;

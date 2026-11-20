@@ -83,6 +83,8 @@ $iconChoices = [
         <?php
         $mode = $appMode;
         $customMode = $uiCustomAll[$mode] ?? [];
+        $baseUrgency = [];
+        foreach (Helper::scenarioCardBase($mode) as $bc) { $baseUrgency[$bc['key']] = $bc['urgency']; }
         $renderColorPicker = function(string $group, string $key, ?string $current) use ($uiPalettes) {
             echo '<div class="flex items-center gap-1.5 flex-wrap">';
             echo '<label class="cursor-pointer" title="สีเริ่มต้น"><input type="radio" name="ui[' . $group . '][' . $key . '][color]" value="" class="peer sr-only"' . ($current === null || $current === '' ? ' checked' : '') . '><span class="block w-5 h-5 rounded-full border-2 border-slate-300 peer-checked:ring-2 peer-checked:ring-slate-500 peer-checked:border-slate-500" style="background:linear-gradient(135deg,#fff 45%,#cbd5e1 45%)"></span></label>';
@@ -131,6 +133,15 @@ $iconChoices = [
                                 </button>
                             </span>
                             <?php $renderColorPicker('scenario', $sc['key'], $o['color'] ?? null); ?>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <span class="shrink-0">ความเร่งด่วนเริ่มต้น:</span>
+                            <select name="ui[scenario][<?= Helper::e($sc['key']) ?>][urgency]" class="input-field !py-1 !px-2 !text-xs w-auto">
+                                <option value="">ใช้ค่าเริ่มต้น (<?= Helper::e(Helper::urgencyLabels()[$baseUrgency[$sc['key']] ?? 'normal'] ?? 'ปกติ') ?>)</option>
+                                <?php foreach (Helper::urgencyLabels() as $uk => $ul): ?>
+                                    <option value="<?= $uk ?>" <?= ($o['urgency'] ?? '') === $uk ? 'selected' : '' ?>><?= Helper::e($ul) ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -294,6 +305,16 @@ $iconChoices = [
             const group = btn.dataset.reset;
             document.querySelectorAll('[data-row="' + group + '"]').forEach(row => {
                 row.querySelectorAll('input[type="text"]').forEach(i => { i.value = ''; });
+                row.querySelectorAll('select').forEach(s => { s.selectedIndex = 0; });
+                const pv = row.querySelector('.picker-value');
+                if (pv) {
+                    pv.value = '';
+                    const btn = row.querySelector('.picker-btn');
+                    if (btn) {
+                        btn.querySelector('.picker-btn-icon').className = 'fa-solid fa-icons picker-btn-icon';
+                        btn.querySelector('span').textContent = 'เลือกไอคอน';
+                    }
+                }
                 const def = row.querySelector('input[name$="[color]"][value=""]');
                 if (def) def.checked = true;
                 const prev = row.querySelector('.ui-icon-preview');
@@ -309,7 +330,7 @@ $iconChoices = [
         document.querySelectorAll('[data-row]').forEach(row => {
             const g = row.dataset.row, k = row.dataset.key;
             const val = (suffix) => {
-                const el = row.querySelector('input[name$="[' + suffix + ']"]');
+                const el = row.querySelector('[name$="[' + suffix + ']"]');
                 return el ? el.value.trim() : '';
             };
             const icon = val('icon');
@@ -319,6 +340,7 @@ $iconChoices = [
             if (/^fa-[a-z0-9-]+$/.test(icon)) e.icon = icon;
             const colorEl = row.querySelector('input[name$="[color]"]:checked');
             if (colorEl && colorEl.value) e.color = colorEl.value;
+            if (val('urgency')) e.urgency = val('urgency');
             if (Object.keys(e).length) cur[g][k] = e;
         });
         base[MODE] = cur;
