@@ -96,6 +96,7 @@ $router->get('/admin/requests', [AdminController::class, 'requests']);
 $router->get('/admin/requests/create', [AdminController::class, 'createRequestForm']);
 $router->post('/admin/requests/create', [AdminController::class, 'createRequest']);
 $router->get('/admin/requests/pending-count', [AdminController::class, 'pendingCount']);
+$router->get('/admin/requests/latest-case', [AdminController::class, 'latestCase']);
 $router->get('/admin/requests/export', [AdminController::class, 'exportRequests']);
 $router->post('/admin/requests/bulk', [AdminController::class, 'bulkRequestAction']);
 $router->get('/admin/requests/{id}', [AdminController::class, 'requestDetail']);

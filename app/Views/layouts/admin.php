@@ -459,6 +459,149 @@
         }
     </script>
 
+    <!-- New-case alert (top-right popup + chime) -->
+    <div id="newCaseAlert" class="hidden fixed top-20 right-4 z-[1400] w-[min(92vw,22rem)]">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden alert-slide-in">
+            <div class="flex items-start gap-3 p-4">
+                <span id="newCaseIcon" class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-red-100 text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-bold text-red-600 uppercase tracking-wide">เคสใหม่รอรับเรื่อง</p>
+                    <h3 id="newCaseTitle" class="font-bold text-slate-800 leading-snug"></h3>
+                    <p id="newCaseMeta" class="text-xs text-slate-500 mt-1"></p>
+                </div>
+                <button type="button" id="newCaseClose" aria-label="ปิด"
+                    class="w-7 h-7 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center shrink-0 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="px-4 pb-4 flex items-center gap-2">
+                <a id="newCaseLink" href="#" class="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold py-2.5 text-center transition">จัดการเคส</a>
+                <button type="button" id="newCaseMute" class="px-3 py-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-medium transition" title="เปิด/ปิดเสียงแจ้งเตือน"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- New-case alert: poll latest pending case, chime + top-right popup ---
+    (function () {
+        const alertBox = document.getElementById('newCaseAlert');
+        if (!alertBox) return;
+        const LS_LAST = 'adminLastCaseId';
+        const LS_MUTE = 'adminAlertMuted';
+        const POLL_MS = 15000;
+        const iconEl = document.getElementById('newCaseIcon');
+        const titleEl = document.getElementById('newCaseTitle');
+        const metaEl = document.getElementById('newCaseMeta');
+        const linkEl = document.getElementById('newCaseLink');
+        const muteBtn = document.getElementById('newCaseMute');
+        const closeBtn = document.getElementById('newCaseClose');
+        const URGENCY_STYLE = {
+            critical: ['bg-red-100', 'text-red-600'],
+            high:     ['bg-orange-100', 'text-orange-600'],
+            normal:   ['bg-blue-100', 'text-blue-600'],
+            low:      ['bg-slate-100', 'text-slate-500'],
+        };
+        let dismissTimer = null;
+        let audioCtx = null;
+        let lastId = 0;
+        try { lastId = parseInt(localStorage.getItem(LS_LAST) || '0', 10) || 0; } catch (e) {}
+
+        function isMuted() {
+            try { return localStorage.getItem(LS_MUTE) === '1'; } catch (e) { return false; }
+        }
+        function paintMute() {
+            muteBtn.innerHTML = isMuted()
+                ? '<i class="fa-solid fa-volume-xmark"></i>'
+                : '<i class="fa-solid fa-volume-high"></i>';
+            muteBtn.classList.toggle('text-slate-400', isMuted());
+        }
+        muteBtn.addEventListener('click', () => {
+            try { localStorage.setItem(LS_MUTE, isMuted() ? '0' : '1'); } catch (e) {}
+            paintMute();
+        });
+        paintMute();
+
+        // Browsers require a user gesture before audio — resume on first interaction
+        function ensureAudio() {
+            if (!audioCtx) {
+                try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        document.addEventListener('pointerdown', ensureAudio);
+        document.addEventListener('keydown', ensureAudio);
+
+        function chime() {
+            if (isMuted() || !audioCtx || audioCtx.state !== 'running') return;
+            const notes = [880, 1174.66];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                const t = audioCtx.currentTime + i * 0.18;
+                gain.gain.setValueAtTime(0.0001, t);
+                gain.gain.exponentialRampToValueAtTime(0.25, t + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+                osc.connect(gain).connect(audioCtx.destination);
+                osc.start(t);
+                osc.stop(t + 0.4);
+            });
+        }
+
+        function show(c) {
+            const style = URGENCY_STYLE[c.urgency] || URGENCY_STYLE.normal;
+            iconEl.className = 'w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ' + style[0] + ' ' + style[1];
+            titleEl.textContent = (c.scenario || 'เหตุการณ์ใหม่') + (c.area_name ? ' — ' + c.area_name : '');
+            const bits = [];
+            if (c.need_types && c.need_types.length) bits.push(c.need_types.join(', '));
+            if (c.people_count > 1) bits.push(c.people_count + ' คน');
+            bits.push(c.time_ago);
+            if (c.urgency_label) bits.push('ความเร่งด่วน: ' + c.urgency_label);
+            metaEl.textContent = bits.join(' · ');
+            linkEl.href = window.BASE_PATH + '/admin/requests/' + c.id;
+            alertBox.classList.remove('hidden');
+            if (dismissTimer) clearTimeout(dismissTimer);
+            dismissTimer = setTimeout(hide, 20000);
+            chime();
+        }
+        function hide() {
+            alertBox.classList.add('hidden');
+            if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null; }
+        }
+        closeBtn.addEventListener('click', hide);
+
+        async function poll() {
+            try {
+                const res = await fetch(window.BASE_PATH + '/admin/requests/latest-case', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const c = data && data.case;
+                if (!c) return;
+                const id = parseInt(c.id, 10) || 0;
+                if (id > lastId) {
+                    try { localStorage.setItem(LS_LAST, String(id)); } catch (e) {}
+                    lastId = id;
+                    show(c);
+                }
+            } catch (e) { /* offline — next poll retries */ }
+        }
+
+        setTimeout(poll, 5000);
+        setInterval(poll, POLL_MS);
+    })();
+    </script>
+
+    <style>
+        @keyframes alertSlideIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+        .alert-slide-in { animation: alertSlideIn .3s ease-out; }
+    </style>
+
     <?php require APP_PATH . '/Views/partials/announcement_popup.php'; ?>
     <?php require APP_PATH . '/Views/partials/lightbox.php'; ?>
 </body>
