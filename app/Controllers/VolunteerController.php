@@ -162,15 +162,25 @@ class VolunteerController
 
         $message = trim($_POST['message'] ?? '');
         $photoPath = null;
-        if (!empty($_FILES['photo']['tmp_name']) && ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-            $photoPath = ImageUploader::store($_FILES['photo']);
+        $photoError = null;
+        $fileErr = $_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE;
+        if ($fileErr !== UPLOAD_ERR_NO_FILE) {
+            if ($fileErr !== UPLOAD_ERR_OK) {
+                $photoError = 'อัปโหลดรูปไม่สำเร็จ (ไฟล์ใหญ่เกิน 2MB)';
+            } else {
+                $photoPath = ImageUploader::store($_FILES['photo']);
+                if ($photoPath === null) {
+                    $photoError = 'ไฟล์รูปไม่ถูกต้อง — รองรับ JPG/PNG/WebP/GIF ไม่เกิน 2MB';
+                }
+            }
         }
         $ok = Need::updateStatus((int)$id, $status, (int)$u['id'], $message !== '' ? $message : null, $photoPath);
         if ($ok && in_array($status, ['accepted', 'in_progress'], true) && !$need['assigned_to']) {
             Need::assign((int)$id, (int)$u['id']);
         }
         if ($ok) Need::flushCache();
-        View::json(['ok' => $ok, 'message' => $ok ? 'อัปเดตสถานะแล้ว' : 'ไม่สำเร็จ']);
+        $warn = $photoError ? ' (แต่รูปไม่ได้บันทึก: ' . $photoError . ')' : '';
+        View::json(['ok' => $ok, 'message' => $ok ? 'อัปเดตสถานะแล้ว' . $warn : 'ไม่สำเร็จ']);
     }
 
     /**
@@ -196,20 +206,27 @@ class VolunteerController
 
         $message = trim($_POST['message'] ?? '');
         $photoPath = null;
-        $photoInvalid = false;
-        if (!empty($_FILES['photo']['tmp_name']) && ($_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-            $photoPath = ImageUploader::store($_FILES['photo']);
-            $photoInvalid = $photoPath === null;
+        $photoError = null;
+        $fileErr = $_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE;
+        if ($fileErr !== UPLOAD_ERR_NO_FILE) {
+            if ($fileErr !== UPLOAD_ERR_OK) {
+                $photoError = 'อัปโหลดรูปไม่สำเร็จ — ไฟล์อาจใหญ่เกินกำหนด (สูงสุด 2MB)';
+            } else {
+                $photoPath = ImageUploader::store($_FILES['photo']);
+                if ($photoPath === null) {
+                    $photoError = 'ไฟล์รูปไม่ถูกต้อง — รองรับ JPG/PNG/WebP/GIF ไม่เกิน 2MB';
+                }
+            }
         }
         if ($message === '' && !$photoPath) {
-            View::json(['ok' => false, 'message' => $photoInvalid
-                ? 'ไฟล์รูปไม่ถูกต้อง — รองรับ JPG/PNG/WebP/GIF ไม่เกิน 2MB'
-                : 'กรุณาพิมพ์ข้อความหรือแนบรูป'], 422);
+            View::json(['ok' => false, 'message' => $photoError ?? 'กรุณาพิมพ์ข้อความหรือแนบรูป'], 422);
         }
+        // Photo failed but message saved — warn so volunteer knows to re-attach
+        $warn = $photoError ? ' (แต่รูปไม่ได้บันทึก: ' . $photoError . ')' : '';
 
         $ok = Need::addNote((int)$id, (int)$u['id'], $message, $photoPath);
         if ($ok) Need::flushCache();
-        View::json(['ok' => $ok, 'message' => $ok ? 'บันทึกความคืบหน้าแล้ว' : 'บันทึกไม่สำเร็จ']);
+        View::json(['ok' => $ok, 'message' => $ok ? 'บันทึกความคืบหน้าแล้ว' . $warn : 'บันทึกไม่สำเร็จ']);
     }
 
     public function release(string $id): void
