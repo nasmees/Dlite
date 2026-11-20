@@ -155,7 +155,7 @@ $myScenario = $need ? Helper::scenarioLabel($need['scenario'] ?? null) : '';
                             <div class="text-slate-600 mt-0.5"><?= Helper::e($h['message']) ?></div>
                         <?php endif; ?>
                         <?php if (!empty($h['photo_path'])): ?>
-                            <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="block mt-1.5">
+                            <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="lightbox block mt-1.5">
                                 <img src="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" alt="รูปหน้างาน" loading="lazy" class="rounded-xl max-h-48 w-auto border border-slate-200">
                             </a>
                         <?php endif; ?>
@@ -408,7 +408,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 <span class="w-2 h-2 rounded-full bg-brand-400 mt-1.5 shrink-0"></span>
                 <div><span class="font-medium text-slate-700">${old}<strong>${esc(st)}</strong></span>
                 ${h.message ? `<div class="text-slate-500">${esc(h.message)}</div>` : ''}
-                ${h.photo_path ? `<a href="${base}/${esc(h.photo_path)}" target="_blank" rel="noopener"><img src="${base}/${esc(h.photo_path)}" alt="รูปหน้างาน" class="rounded-lg max-h-40 w-auto border border-slate-200 mt-1"></a>` : ''}
+                ${h.photo_path ? `<a href="${base}/${esc(h.photo_path)}" target="_blank" rel="noopener" class="lightbox"><img src="${base}/${esc(h.photo_path)}" alt="รูปหน้างาน" class="rounded-lg max-h-40 w-auto border border-slate-200 mt-1"></a>` : ''}
                 <div class="text-slate-400">${esc(timeAgoTH(h.created_at))}</div></div>
             </li>`;
         }).join('');
@@ -437,7 +437,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
             </div>
             ${chips ? `<div class="flex flex-wrap gap-1.5 mb-3">${chips}</div>` : ''}
             ${n.description ? `<p class="text-base text-slate-600 whitespace-pre-wrap bg-slate-50 rounded-xl p-3 mb-3">${esc(n.description)}</p>` : ''}
-            ${n.photo_path ? `<a href="${base}/${esc(n.photo_path)}" target="_blank" rel="noopener" class="block mb-3"><img src="${base}/${esc(n.photo_path)}" alt="รูปประกอบ" class="w-full rounded-xl max-h-56 object-cover bg-slate-100"></a>` : ''}
+            ${n.photo_path ? `<a href="${base}/${esc(n.photo_path)}" target="_blank" rel="noopener" class="lightbox block mb-3"><img src="${base}/${esc(n.photo_path)}" alt="รูปประกอบ" class="w-full rounded-xl max-h-56 object-cover bg-slate-100"></a>` : ''}
             ${hist ? `<div class="mb-4"><p class="text-sm font-bold text-slate-500 mb-2">ไทม์ไลน์</p><ul class="space-y-2.5">${hist}</ul></div>` : ''}
             <div class="pt-1">
                 <a href="${base}/needs/${encodeURIComponent(n.id)}" class="block text-center text-base font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl px-4 py-3">ดูรายละเอียดเต็ม →</a>

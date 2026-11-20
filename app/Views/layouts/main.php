@@ -377,5 +377,6 @@
     <?php endif; ?>
 
     <?php require APP_PATH . '/Views/partials/announcement_popup.php'; ?>
+    <?php require APP_PATH . '/Views/partials/lightbox.php'; ?>
 </body>
 </html>

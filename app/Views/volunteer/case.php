@@ -91,7 +91,7 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
         </dl>
 
         <?php if (!empty($need['photo_path'])): ?>
-            <a href="<?= Helper::e(Helper::photoUrl($need['photo_path'])) ?>" target="_blank" rel="noopener" class="block mt-4">
+            <a href="<?= Helper::e(Helper::photoUrl($need['photo_path'])) ?>" target="_blank" rel="noopener" class="lightbox block mt-4">
                 <img src="<?= Helper::e(Helper::photoUrl($need['photo_path'])) ?>" alt="รูปประกอบ" loading="lazy" class="w-full rounded-xl max-h-72 object-cover bg-slate-100">
             </a>
         <?php endif; ?>
@@ -151,7 +151,7 @@ $canTransfer = $canAct && !$isFinal && count($volunteers) > 1;
                         <div class="text-slate-600 mt-0.5"><?= Helper::e($h['message']) ?></div>
                     <?php endif; ?>
                     <?php if (!empty($h['photo_path'])): ?>
-                        <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="block mt-1.5">
+                        <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="lightbox block mt-1.5">
                             <img src="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" alt="รูปหน้างาน" loading="lazy" class="rounded-xl max-h-48 w-auto border border-slate-200">
                         </a>
                     <?php endif; ?>

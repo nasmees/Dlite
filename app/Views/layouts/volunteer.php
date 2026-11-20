@@ -198,5 +198,7 @@
             }
         })();
     </script>
+
+    <?php require APP_PATH . '/Views/partials/lightbox.php'; ?>
 </body>
 </html>

@@ -65,7 +65,7 @@ $canClose = in_array($status, ['accepted', 'in_progress'], true);
                 <?php if (!empty($need['photo_path'])): ?>
                     <div class="mt-4 pt-4 border-t border-slate-100">
                         <div class="text-sm text-slate-500 mb-2">รูปภาพ</div>
-                        <a href="<?= Helper::e(Helper::photoUrl($need['photo_path'])) ?>" target="_blank">
+                        <a href="<?= Helper::e(Helper::photoUrl($need['photo_path'])) ?>" target="_blank" rel="noopener" class="lightbox block">
                             <img src="<?= Helper::e(Helper::photoUrl($need['photo_path'])) ?>" alt="" class="rounded-xl max-h-64 border border-slate-200">
                         </a>
                     </div>
@@ -196,7 +196,7 @@ $canClose = in_array($status, ['accepted', 'in_progress'], true);
                                     </div>
                                     <?php if ($h['message']): ?><div class="text-sm text-slate-600 mt-0.5"><?= Helper::e($h['message']) ?></div><?php endif; ?>
                                     <?php if (!empty($h['photo_path'])): ?>
-                                        <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="block mt-1">
+                                        <a href="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" target="_blank" rel="noopener" class="lightbox block mt-1">
                                             <img src="<?= Helper::e(Helper::photoUrl($h['photo_path'])) ?>" alt="รูปหน้างาน" loading="lazy" class="rounded-lg max-h-40 w-auto border border-slate-200">
                                         </a>
                                     <?php endif; ?>
