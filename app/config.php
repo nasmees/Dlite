@@ -21,8 +21,9 @@ define('CSRF_TOKEN_NAME', 'csrf_token');
 define('REMEMBER_COOKIE', 'dsc_lite_remember');
 define('REMEMBER_DAYS', 30);
 
-// Upload
-define('UPLOAD_MAX_SIZE', 2 * 1024 * 1024); // 2MB
+// Upload — accept large camera photos; ImageUploader resizes/compresses to ~1280px JPEG after upload
+// (phone cameras produce 3-8MB files; keep headroom for PHP post_max_size too)
+define('UPLOAD_MAX_SIZE', 8 * 1024 * 1024); // 8MB
 define('UPLOAD_ALLOWED', ['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 // SQLite settings

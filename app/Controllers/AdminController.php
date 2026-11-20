@@ -1125,7 +1125,8 @@ class AdminController
         } elseif (!empty($_FILES['logo']['tmp_name']) && ($_FILES['logo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
             $path = ImageUploader::store($_FILES['logo']);
             if (!$path) {
-                View::json(['ok' => false, 'message' => 'อัปโหลดโลโก้ไม่สำเร็จ — รองรับ JPG/PNG/WEBP/GIF ไม่เกิน 2MB'], 422);
+                $maxMb = (int)round(UPLOAD_MAX_SIZE / 1048576);
+                View::json(['ok' => false, 'message' => "อัปโหลดโลโก้ไม่สำเร็จ — รองรับ JPG/PNG/WEBP/GIF ไม่เกิน {$maxMb}MB"], 422);
             }
             Setting::set('brand_logo', $path);
         }

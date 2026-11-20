@@ -161,16 +161,19 @@ class VolunteerController
         }
 
         $message = trim($_POST['message'] ?? '');
+        $maxMb = (int)round(UPLOAD_MAX_SIZE / 1048576);
         $photoPath = null;
         $photoError = null;
         $fileErr = $_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE;
         if ($fileErr !== UPLOAD_ERR_NO_FILE) {
-            if ($fileErr !== UPLOAD_ERR_OK) {
-                $photoError = 'อัปโหลดรูปไม่สำเร็จ (ไฟล์ใหญ่เกิน 2MB)';
+            if ($fileErr === UPLOAD_ERR_INI_SIZE || $fileErr === UPLOAD_ERR_FORM_SIZE) {
+                $photoError = "ไฟล์ใหญ่เกินที่เซิร์ฟเวอร์รับได้ (สูงสุด {$maxMb}MB)";
+            } elseif ($fileErr !== UPLOAD_ERR_OK) {
+                $photoError = 'อัปโหลดรูปไม่สำเร็จ — ลองใหม่อีกครั้ง';
             } else {
                 $photoPath = ImageUploader::store($_FILES['photo']);
                 if ($photoPath === null) {
-                    $photoError = 'ไฟล์รูปไม่ถูกต้อง — รองรับ JPG/PNG/WebP/GIF ไม่เกิน 2MB';
+                    $photoError = "ไฟล์รูปไม่ถูกต้องหรือใหญ่เกิน {$maxMb}MB — รองรับ JPG/PNG/WebP/GIF (iPhone ให้ถ่ายจากกล้องในหน้านี้)";
                 }
             }
         }
@@ -204,17 +207,20 @@ class VolunteerController
             View::json(['ok' => false, 'message' => 'เคสนี้ปิดแล้ว ไม่สามารถบันทึกได้'], 422);
         }
 
+        $maxMb = (int)round(UPLOAD_MAX_SIZE / 1048576);
         $message = trim($_POST['message'] ?? '');
         $photoPath = null;
         $photoError = null;
         $fileErr = $_FILES['photo']['error'] ?? UPLOAD_ERR_NO_FILE;
         if ($fileErr !== UPLOAD_ERR_NO_FILE) {
-            if ($fileErr !== UPLOAD_ERR_OK) {
-                $photoError = 'อัปโหลดรูปไม่สำเร็จ — ไฟล์อาจใหญ่เกินกำหนด (สูงสุด 2MB)';
+            if ($fileErr === UPLOAD_ERR_INI_SIZE || $fileErr === UPLOAD_ERR_FORM_SIZE) {
+                $photoError = "ไฟล์ใหญ่เกินที่เซิร์ฟเวอร์รับได้ (สูงสุด {$maxMb}MB)";
+            } elseif ($fileErr !== UPLOAD_ERR_OK) {
+                $photoError = 'อัปโหลดรูปไม่สำเร็จ — ลองใหม่อีกครั้ง';
             } else {
                 $photoPath = ImageUploader::store($_FILES['photo']);
                 if ($photoPath === null) {
-                    $photoError = 'ไฟล์รูปไม่ถูกต้อง — รองรับ JPG/PNG/WebP/GIF ไม่เกิน 2MB';
+                    $photoError = "ไฟล์รูปไม่ถูกต้องหรือใหญ่เกิน {$maxMb}MB — รองรับ JPG/PNG/WebP/GIF (iPhone ให้ถ่ายจากกล้องในหน้านี้)";
                 }
             }
         }

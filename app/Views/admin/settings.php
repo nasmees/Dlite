@@ -55,7 +55,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <input type="file" name="logo" id="logoInput" accept="image/jpeg,image/png,image/webp,image/gif" class="input-field !py-2 text-sm">
-                    <p class="text-xs text-slate-400 mt-1">JPG / PNG / WEBP / GIF ไม่เกิน 2MB — แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</p>
+                    <p class="text-xs text-slate-400 mt-1">JPG / PNG / WEBP / GIF ไม่เกิน 8MB — แนะนำรูปสี่เหลี่ยมจัตุรัส พื้นหลังโปร่งใส</p>
                     <?php if ($logoUrl): ?>
                         <label class="mt-2 inline-flex items-center gap-2 text-sm text-red-600 cursor-pointer">
                             <input type="checkbox" name="remove_logo" value="1" class="rounded border-slate-300 text-red-600 w-4 h-4">
