@@ -5,7 +5,7 @@
  */
 
 define('APP_NAME', 'Dlite');
-define('APP_VERSION', '1.0.0');
+define('APP_VERSION', '1.1.0');
 define('APP_URL', ''); // Auto-detect or set base URL
 
 // Paths (index.php อยู่ที่ root ของโปรเจกต์ — อัป FTP แล้วรันได้เลย)
