@@ -592,8 +592,22 @@
             } catch (e) { /* offline — next poll retries */ }
         }
 
+        let pollTimer = null;
+        function schedulePoll() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = document.hidden ? null : setInterval(poll, POLL_MS);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            } else {
+                poll();               // catch up immediately on return
+                schedulePoll();
+            }
+        });
+
         setTimeout(poll, 5000);
-        setInterval(poll, POLL_MS);
+        schedulePoll();
     })();
     </script>
 

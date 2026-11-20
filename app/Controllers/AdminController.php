@@ -624,39 +624,42 @@ class AdminController
     {
         Auth::requireLogin();
 
-        $db = Database::getInstance();
-        $stmt = $db->prepare("
-            SELECT n.id, n.code, n.scenario, n.need_types, n.urgency, n.created_at,
-                   n.reporter_name, n.people_count, a.name AS area_name
-            FROM needs n
-            LEFT JOIN areas a ON a.id = n.area_id
-            WHERE n.status = 'pending'
-            ORDER BY n.id DESC
-            LIMIT 1
-        ");
-        $stmt->execute();
-        $n = $stmt->fetch();
+        // Short cache — Need::flushCache() runs on every case write, so a
+        // new report invalidates this immediately.
+        $payload = Cache::remember('admin_latest_case', 8, function () {
+            $db = Database::getInstance();
+            $stmt = $db->prepare("
+                SELECT n.id, n.code, n.scenario, n.need_types, n.urgency, n.created_at,
+                       n.reporter_name, n.people_count, a.name AS area_name
+                FROM needs n
+                LEFT JOIN areas a ON a.id = n.area_id
+                WHERE n.status = 'pending'
+                ORDER BY n.id DESC
+                LIMIT 1
+            ");
+            $stmt->execute();
+            $n = $stmt->fetch();
 
-        if (!$n) {
-            View::json(['ok' => true, 'case' => null]);
-            return;
-        }
+            if (!$n) return ['case' => null];
 
-        $types = json_decode($n['need_types'] ?? '[]', true) ?: [];
-        $urgencyLabels = Helper::urgencyLabels();
+            $types = json_decode($n['need_types'] ?? '[]', true) ?: [];
+            $urgencyLabels = Helper::urgencyLabels();
 
-        View::json(['ok' => true, 'case' => [
-            'id' => (int)$n['id'],
-            'code' => $n['code'],
-            'scenario' => Helper::scenarioLabel($n['scenario'] ?? ''),
-            'need_types' => array_values(array_map(fn($t) => Helper::needTypeLabel($t), $types)),
-            'urgency' => $n['urgency'],
-            'urgency_label' => $urgencyLabels[$n['urgency']] ?? $n['urgency'],
-            'time_ago' => Helper::timeAgo((string)$n['created_at']),
-            'reporter_name' => $n['reporter_name'],
-            'people_count' => (int)$n['people_count'],
-            'area_name' => $n['area_name'] ?? '',
-        ]]);
+            return ['case' => [
+                'id' => (int)$n['id'],
+                'code' => $n['code'],
+                'scenario' => Helper::scenarioLabel($n['scenario'] ?? ''),
+                'need_types' => array_values(array_map(fn($t) => Helper::needTypeLabel($t), $types)),
+                'urgency' => $n['urgency'],
+                'urgency_label' => $urgencyLabels[$n['urgency']] ?? $n['urgency'],
+                'time_ago' => Helper::timeAgo((string)$n['created_at']),
+                'reporter_name' => $n['reporter_name'],
+                'people_count' => (int)$n['people_count'],
+                'area_name' => $n['area_name'] ?? '',
+            ]];
+        });
+
+        View::json(['ok' => true, 'case' => $payload['case'] ?? null]);
     }
 
     /**
