@@ -368,11 +368,18 @@
     
     <?php if ($reqPath !== '/admin/requests/create'): ?>
     <!-- Quick-add case FAB (all admin pages) -->
-    <a href="<?= Helper::url('admin/requests/create') ?>" aria-label="เพิ่มเคสใหม่"
-       class="fixed bottom-5 right-5 z-[1001] inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm pl-4 pr-5 py-3 shadow-lg shadow-red-600/30 transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-        แจ้งเหตุ
-    </a>
+    <div id="adminFab" class="fixed bottom-5 right-5 z-[1001] flex items-center gap-1.5">
+        <button type="button" id="adminFabClose" aria-label="ปิดปุ่มแจ้งเหตุ"
+            class="w-7 h-7 rounded-full bg-slate-700/80 hover:bg-slate-900 text-white/90 hover:text-white flex items-center justify-center shadow-md transition"
+            title="ปิดปุ่มนี้ (กลับมาใหม่เมื่อเปิดเบราว์เซอร์ใหม่)">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        <a href="<?= Helper::url('admin/requests/create') ?>" aria-label="เพิ่มเคสใหม่"
+           class="inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-semibold text-sm pl-4 pr-5 py-3 shadow-lg shadow-red-600/30 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            แจ้งเหตุ
+        </a>
+    </div>
     <?php endif; ?>
 
     <!-- Main Content -->
@@ -384,6 +391,16 @@
     </div>
     
     <script>
+        // Dismissible "แจ้งเหตุ" FAB — remembers per browser session
+        const adminFab = document.getElementById('adminFab');
+        if (adminFab) {
+            if (sessionStorage.getItem('adminFabHidden') === '1') adminFab.classList.add('hidden');
+            document.getElementById('adminFabClose').addEventListener('click', () => {
+                adminFab.classList.add('hidden');
+                sessionStorage.setItem('adminFabHidden', '1');
+            });
+        }
+
         // Sidebar toggle for mobile
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
